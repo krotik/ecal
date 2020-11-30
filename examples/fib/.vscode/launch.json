@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "ecaldebug",
+            "request": "launch",
+            "name": "Debug ECAL script with ECAL Debug Server",
+            "host": "localhost",
+            "port": 33274,
+            "dir": "${workspaceFolder}",
+            "executeOnEntry": true
+        }
+    ]
+}

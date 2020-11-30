@@ -1,0 +1,138 @@
+{
+  "name": "ecal-support",
+  "displayName": "ECAL Support",
+  "version": "0.9.1",
+  "publisher": "krotik",
+  "description": "Extension to support the development of ECAL scripts in VS Code.",
+  "author": {
+    "name": "Matthias Ladkau",
+    "email": "github@ladkau.de"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "icon": "images/logo.png",
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://devt.de/krotik/ecal.git"
+  },
+  "scripts": {
+    "compile": "tsc",
+    "watch": "tsc -w",
+    "package": "vsce package",
+    "lint": "eslint 'src/**/*.{js,ts,tsx}' --quiet",
+    "pretty": "prettier --write ."
+  },
+  "dependencies": {
+    "@jpwilliams/waitgroup": "1.0.1",
+    "vscode-debugadapter": "^1.42.1",
+    "promise-socket": "^7.0.0",
+    "readline-promise": "^1.0.4",
+    "async-lock": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.2",
+    "@types/vscode": "^1.50.0",
+    "@typescript-eslint/eslint-plugin": "^4.5.0",
+    "@typescript-eslint/parser": "^4.5.0",
+    "eslint": "^7.12.0",
+    "eslint-config-standard": "^15.0.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.2",
+    "prettier": "2.1.2",
+    "typescript": "^4.0.3",
+    "vsce": "^1.81.1"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onDebug"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ecal",
+        "aliases": [
+          "Event Condition Action Language",
+          "ecal"
+        ],
+        "extensions": [
+          ".ecal"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ecal",
+        "scopeName": "source.ecal",
+        "path": "./syntaxes/ecal.tmLanguage.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "ecal"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "ecaldebug",
+        "label": "ECAL Debug",
+        "program": "./out/ecalDebugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "host",
+              "port",
+              "dir"
+            ],
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Host of the ECAL debug server.",
+                "default": "localhost:43806"
+              },
+              "port": {
+                "type": "number",
+                "description": "Port of the ECAL debug server.",
+                "default": "localhost:43806"
+              },
+              "dir": {
+                "type": "string",
+                "description": "Root directory for ECAL debug server.",
+                "default": "${workspaceFolder}"
+              },
+              "executeOnEntry": {
+                "type": "boolean",
+                "description": "Execute the current edited ECAL script on entry. If this is set to false then code needs to be manually started from the ECAL debug server console.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": false
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "ecaldebug",
+            "request": "launch",
+            "name": "Debug ECAL script with ECAL Debug Server",
+            "host": "localhost",
+            "port": 33274,
+            "dir": "${workspaceFolder}",
+            "executeOnEntry": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Event Condition Action Language",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#identifiers"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.import.ecal",
+          "match": "\\b(import|as)\\b"
+        },
+        {
+          "name": "keyword.control.sink.ecal",
+          "match": "\\b(sink|kindmatch|scopematch|statematch|priority|suppresses)\\b"
+        },
+        {
+          "name": "keyword.control.function.ecal",
+          "match": "\\b(func|return)\\b"
+        },
+        {
+          "name": "keyword.operator.boolean.ecal",
+          "match": "\\b(and|or|not)\\b"
+        },
+        {
+          "name": "keyword.operator.string.ecal",
+          "match": "\\b(like|hasprefix|hassuffic)\\b"
+        },
+        {
+          "name": "keyword.operator.list.ecal",
+          "match": "\\b(in|notin)\\b"
+        },
+        {
+          "name": "constant.language.terminals.ecal",
+          "match": "\\b(false|true|null)\\b"
+        },
+        {
+          "name": "keyword.control.conditional.ecal",
+          "match": "\\b(if|elif|else)\\b"
+        },
+        {
+          "name": "keyword.control.loop.ecal",
+          "match": "\\b(for|break|continue)\\b"
+        },
+        {
+          "name": "keyword.control.try.ecal",
+          "match": "\\b(try|except|finally)\\b"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "match": "([a-zA-Z]+)\\(",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.ecal"
+            }
+          }
+        },
+        {
+          "match": "([a-zA-Z]+) :?=",
+          "captures": {
+            "1": {
+              "name": "storage.type.var.ecal"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ecal",
+          "begin": "r?\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "include": "#escapes"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ecal",
+          "begin": "r?'",
+          "end": "'",
+          "patterns": [
+            {
+              "include": "#escapes"
+            }
+          ]
+        }
+      ],
+      "repository": {
+        "escapes": {
+          "patterns": [
+            {
+              "name": "constant.character.escape.ecal",
+              "match": "\\\\."
+            },
+            {
+              "name": "constant.character.escape.ecal",
+              "begin": "{{",
+              "end": "}}"
+            }
+          ]
+        }
+      }
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.ecal",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.ecal",
+          "begin": "#",
+          "end": "\\n"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.ecal"
+}

@@ -1,0 +1,7 @@
+import "lib/lib.ecal" as lib
+
+/* Print out fibonacci sequence */
+
+for a in range(2, 20, 2) {
+  log("fib({{a}}) = ", lib.fib(a))
+}

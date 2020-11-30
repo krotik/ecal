@@ -1,0 +1,194 @@
+/*
+Conway's Game of Life
+
+A zero-player game that evolves based on its initial state.
+
+https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+
+Some examples:
+
+grid := [              # Normally evolving
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+]
+
+grid := [              # Blinker oscillator
+    [ 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 1, 0, 0 ], 
+    [ 0, 0, 1, 0, 0 ], 
+    [ 0, 0, 1, 0, 0 ], 
+    [ 0, 0, 0, 0, 0 ], 
+]
+
+grid := [              # Still life
+    [ 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 1, 1, 0, 0 ], 
+    [ 0, 1, 0, 0, 1, 0 ], 
+    [ 0, 0, 1, 1, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0 ], 
+]
+
+grid := [              # Glider spaceship
+    [ 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 1, 1, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+]
+
+*/
+
+grid := [              # Penta-decathlon oscillator
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ]
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ], 
+    [ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+]
+
+/*
+output displays a given grid.
+*/
+func output(grid) {
+    for row in grid {
+        displayRow := []
+        for i in row { 
+            if i == 0 { 
+                i := ' '
+            } else { 
+                i := '*'
+            }
+            displayRow := add(displayRow, i)
+        }
+        log("{{displayRow}}")
+    }
+}
+
+/*
+newGrid allocates a new grid.
+*/
+func newGrid() {
+    result := []
+
+    for row in range(0, len(grid)-1) {
+        newrow := []
+        for col in range(0, len(grid[0])-1) {
+            newrow := add(newrow, 0)
+        }
+        result := add(result, newrow)
+    }
+
+    return result
+}
+
+/*
+compareGrids compares two grids and returns a delta of differences.
+*/
+func compareGrids(g1, g2) {
+    delta := 0
+
+    for row in range(0, len(grid)-1) {
+        for col in range(0, len(grid[0])-1) {
+            if g1[row][col] != g2[row][col] {
+                delta := delta + 1
+            }
+        }
+    }
+
+    return delta
+}
+
+/*
+nextGen calculates the next generation for a given grid.
+*/
+func nextGen() {
+
+    future := newGrid()
+
+    for row in range(0, len(grid)-1) {
+        for col in range(0, len(grid[0])-1) {
+
+            # Finding number of neighbours that are alive 
+            
+            aliveNeighbours := 0
+            for i in range(-1, 1) { 
+                for j in range(-1, 1) {
+                    try {
+                      aliveNeighbours := aliveNeighbours + grid[row + i][col + j]
+                    } except {
+                        # Don't care about out of bounds errors
+                    }
+                }
+            }
+
+            # Subtract the cell itself if alive 
+
+            aliveNeighbours := aliveNeighbours - grid[row][col]; 
+
+            # Apply the rules
+
+            if grid[row][col] == 1 and aliveNeighbours < 2 {
+                # Cell is lonely and dies         
+            } elif grid[row][col] == 1 and aliveNeighbours > 3 {
+                # Cell dies due to over population             
+            } elif grid[row][col] == 0 and aliveNeighbours == 3 { 
+                # A new cell is born 
+                future[row][col] := 1
+            } else {
+                # Unchanged
+                future[row][col] := grid[row][col]
+            }
+
+            # log("row: {{row}} col: {{col}} val: {{grid[row][col]}} aliveNeighbours:{{aliveNeighbours}} -> {{future[row][col]}}")
+
+        }
+    }
+
+    return future
+}
+
+output(grid)
+
+# Evolve the grid for 33 generations
+
+for i in range(1, 33) {
+    next := nextGen()
+    
+    delta := compareGrids(grid, next)
+    if delta == 0 {
+        delta := "0 (still life)"
+    }
+    
+    log("Gen: {{i}} - delta {{delta}}")
+    
+    output(next)
+    grid := next
+}

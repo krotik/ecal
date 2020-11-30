@@ -1,0 +1,14 @@
+ecal
+/.cache
+/.cover
+/.ecal_console_history
+/coverage.txt
+/coverage.out
+/coverage.html
+/dist
+/build
+/stdlib/stdlib_gen.go
+/ecal-support/node_modules
+/ecal-support/out
+/ecal-support/*.vsix
+/ecal-support/package-lock.json
