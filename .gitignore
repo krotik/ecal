@@ -7,7 +7,6 @@ ecal
 /coverage.html
 /dist
 /build
-/stdlib/stdlib_gen.go
 /ecal-support/node_modules
 /ecal-support/out
 /ecal-support/*.vsix
