@@ -199,13 +199,22 @@ func (rt *sinkRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint
 								sre.Environment = sinkVS
 
 							} else {
+								var data interface{}
+								rerr := rt.erp.NewRuntimeError(util.ErrSink, err.Error(), rt.node).(*util.RuntimeError)
+
+								if e, ok := err.(*util.RuntimeError); ok {
+									rerr = e
+								} else if r, ok := err.(*returnValue); ok {
+									rerr = r.RuntimeError
+									data = r.returnValue
+								}
 
 								// Provide additional information for unexpected errors
 
 								err = &util.RuntimeErrorWithDetail{
-									RuntimeError: err.(*util.RuntimeError),
+									RuntimeError: rerr,
 									Environment:  sinkVS,
-									Data:         nil,
+									Data:         data,
 								}
 							}
 						}

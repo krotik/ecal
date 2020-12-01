@@ -12,6 +12,7 @@ package interpreter
 
 import (
 	"fmt"
+	"sync"
 
 	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/sortutil"
@@ -597,6 +598,54 @@ func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint6
 				}
 			}
 		}
+	}
+
+	return res, err
+}
+
+// Mutex Runtime
+// =============
+
+/*
+mutexRuntime is the runtime for mutex blocks.
+*/
+type mutexRuntime struct {
+	*baseRuntime
+}
+
+/*
+mutexRuntimeInst returns a new runtime component instance.
+*/
+func mutexRuntimeInst(erp *ECALRuntimeProvider, node *parser.ASTNode) parser.Runtime {
+	return &mutexRuntime{newBaseRuntime(erp, node)}
+}
+
+/*
+Eval evaluate this runtime component.
+*/
+func (rt *mutexRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint64) (interface{}, error) {
+	var res interface{}
+
+	_, err := rt.baseRuntime.Eval(vs, is, tid)
+
+	if err == nil {
+
+		// Get the name of the mutex
+
+		name := rt.node.Children[0].Token.Val
+
+		mutex, ok := rt.erp.Mutexes[name]
+		if !ok {
+			mutex = &sync.Mutex{}
+			rt.erp.Mutexes[name] = mutex
+		}
+
+		tvs := vs.NewChild(scope.NameFromASTNode(rt.node))
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		res, err = rt.node.Children[0].Runtime.Eval(tvs, is, tid)
 	}
 
 	return res, err

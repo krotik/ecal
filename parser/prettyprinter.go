@@ -135,6 +135,10 @@ func init() {
 		// TokenTRY - Special case (handled in code)
 		// TokenEXCEPT - Special case (handled in code)
 		NodeFINALLY + "_1": template.Must(template.New(NodeFINALLY).Parse(" finally {\n{{.c1}}}\n")),
+
+		// Mutex block
+
+		NodeMUTEX + "_2": template.Must(template.New(NodeLOOP).Parse("mutex {{.c1}} {\n{{.c2}}}\n")),
 	}
 
 	bracketPrecedenceMap = map[string]bool{

@@ -113,6 +113,7 @@ sink rule3
     kindmatch [ "web.log" ],
 	{
         log("rule3 - Logging user:", event.state.user)
+        return 123
 	}
 
 res := addEventAndWait("request", "web.page.index", {
@@ -140,7 +141,25 @@ log("ErrorResult:", res, " ", res == null)
 rule1 - Handling request: web.page.index
 rule2 - Tracking user:foo
 rule3 - Logging user:foo
-ErrorResult:null true
+ErrorResult:[
+  {
+    "errors": {
+      "rule3": {
+        "data": 123,
+        "detail": "Return value: 123",
+        "error": "ECAL error in ECALTestRuntime: *** return *** (Return value: 123) (Line:26 Pos:9)",
+        "type": "*** return ***"
+      }
+    },
+    "event": {
+      "kind": "web.log",
+      "name": "Rule1Event2",
+      "state": {
+        "user": "foo"
+      }
+    }
+  }
+] false
 rule2 - Tracking user:bar
 ErrorResult:[
   {

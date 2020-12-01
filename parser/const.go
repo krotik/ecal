@@ -186,6 +186,10 @@ const (
 	TokenEXCEPT
 	TokenFINALLY
 
+	// Mutex block
+
+	TokenMUTEX
+
 	TokenENDLIST
 )
 
@@ -298,4 +302,8 @@ const (
 	NodeEXCEPT  = "except"
 	NodeAS      = "as"
 	NodeFINALLY = "finally"
+
+	// Mutex block
+
+	NodeMUTEX = "mutex"
 )

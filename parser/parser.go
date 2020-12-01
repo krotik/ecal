@@ -139,6 +139,10 @@ func init() {
 		TokenTRY:     {NodeTRY, nil, nil, nil, nil, 0, ndTry, nil},
 		TokenEXCEPT:  {NodeEXCEPT, nil, nil, nil, nil, 0, nil, nil},
 		TokenFINALLY: {NodeFINALLY, nil, nil, nil, nil, 0, nil, nil},
+
+		// Mutex statement
+
+		TokenMUTEX: {NodeMUTEX, nil, nil, nil, nil, 0, ndMutex, nil},
 	}
 }
 
@@ -834,6 +838,21 @@ func ndTry(p *parser, self *ASTNode) (*ASTNode, error) {
 	}
 
 	return try, err
+}
+
+/*
+ndMutex is used to parse a mutex block.
+*/
+func ndMutex(p *parser, self *ASTNode) (*ASTNode, error) {
+	var block *ASTNode
+
+	err := acceptChild(p, self, TokenIDENTIFIER)
+
+	if err == nil {
+		block, err = parseInnerStatements(p, self)
+	}
+
+	return block, err
 }
 
 // Standard left denotation functions

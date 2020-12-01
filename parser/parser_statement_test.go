@@ -154,6 +154,32 @@ try
 	}
 }
 
+func TestMutexBlock(t *testing.T) {
+
+	input := `
+mutex foo {
+	print(1)
+	print(2)
+}
+`
+	expectedOutput := `
+mutex
+  identifier: foo
+  statements
+    identifier: print
+      funccall
+        number: 1
+    identifier: print
+      funccall
+        number: 2
+`[1:]
+
+	if res, err := UnitTestParse("mytest", input); err != nil || fmt.Sprint(res) != expectedOutput {
+		t.Error("Unexpected parser output:\n", res, "expected was:\n", expectedOutput, "Error:", err)
+		return
+	}
+}
+
 func TestLoopParsing(t *testing.T) {
 
 	input := `

@@ -29,7 +29,7 @@ foobar.doSomething()
 
 Event Sinks
 --
-Event sinks are the core constructs of ECAL which provide concurrency and the means to respond to events of an external system. Sinks provide ECAL with an interface to an [event condition action engine](engine.md) which coordinates the parallel execution of code. Sinks cannot be scoped into modules or objects and are usually declared at the top level. Sinks must not write to top level variables. They have the following form:
+Event sinks are the core constructs of ECAL which provide concurrency and the means to respond to events of an external system. Sinks provide ECAL with an interface to an [event condition action engine](engine.md) which coordinates the parallel execution of code. Sinks cannot be scoped into modules or objects and are usually declared at the top level. They must only access top level variables within mutex blocks. Sinks have the following form:
 ```
 sink mysink
     kindmatch [ "foo.bar.*" ],
@@ -93,6 +93,15 @@ res := addEventAndWait("request", "foo.bar.xxx", {
 })
  ```
 The order of execution of sinks can be controlled via their priority. All sinks which are triggered by a particular event will be executed in order of their priority.
+
+Mutex blocks
+--
+To protect shared resource when handling concurrent events, ECAL supports mutex blocks. Mutex blocks which share the same name can only be accessed by one thread at a given time:
+```
+mutex myresource {
+  globalResource := "new value"
+}
+```
 
 Functions
 --

@@ -1043,3 +1043,37 @@ error: This did not work`[1:] {
 		return
 	}
 }
+
+func TestMutexStatements(t *testing.T) {
+
+	vs := scope.NewScope(scope.GlobalScope)
+
+	_, err := UnitTestEvalAndAST(
+		`
+mutex foo {
+	a := 1
+    raise("test 12", null, [1,2,3])
+}
+`, vs,
+		`
+mutex
+  identifier: foo
+  statements
+    :=
+      identifier: a
+      number: 1
+    identifier: raise
+      funccall
+        string: 'test 12'
+        null
+        list
+          number: 1
+          number: 2
+          number: 3
+`[1:])
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}

@@ -73,6 +73,50 @@ $ sh run.sh
 
 The interpreter can be run in debug mode which adds debug commands to the console. Run the ECAL program in debug mode with: `sh debug.sh` - this will also start a debug server which external development environments can connect to. There is a [VSCode integration](ecal-support/README.md) available which allows debugging via a graphical interface.
 
+### Embedding ECAL
+
+The primary purpose of ECAL is to be a simple multi-purpose language which can be embedded into other software:
+- It has a minimal (quite generic) syntax.
+- By default the language can only reach outside the interpreter via return values, injecting events or logging.
+- External systems can interact with the code via events which maybe be handled in sink systems with varying complexity.
+- A standard library of function can easily be created by either generating proxy code to standard Go functions or by adding simple straight-forward function objects.
+
+The core of the ECAL interpreter is the runtime provider object which is constructed with a given logger and import locator. The import locator is used by the import statement to load other ECAL code at runtime. The logger is used to process log statements from the interpreter.
+```
+logger := util.NewStdOutLogger()
+importLocator := &util.FileImportLocator{Root: "/somedir"}
+rtp := interpreter.NewECALRuntimeProvider("Some Program Title", importLocator, logger)
+```
+The ECALRuntimeProvider provides additionally to the logger and import locator also the following: A cron object to schedule recurring events. An ECA processor which triggers sinks and can be used to inject events into the interpreter. A debugger object which can be used to debug ECAL code supporting thread suspension, thread inspection, value injection and extraction and stepping through statements.
+
+The actual ECAL code has to be first parsed into an Abstract Syntax Tree. The tree is annotated during its construction with runtime components created by the runtime provider.
+```
+ast, err := parser.ParseWithRuntime("sourcefilename", code, rtp)
+```
+The code is executed by calling the Validate() and Eval() function.
+```
+err = ast.Runtime.Validate()
+vs := scope.NewScope(scope.GlobalScope)
+res, err := ast.Runtime.Eval(vs, make(map[string]interface{}), threadId)
+```
+Eval is given a variable scope which stores the values of variables, an instance state for internal use and a thread ID identifying the executing thread.
+
+If events are to be used then the processor of the runtime provider needs to be started first.
+```
+rtp.Processor.Start()
+```
+Events can then be injected into the interpreter.
+```
+monitor, err := rtp.Processor.AddEventAndWait(engine.NewEvent("MyEvent", []string{"foo", "bar"}, map[interface{}]interface{}{
+  "data1": 123,
+  "data2": "123",
+}), nil)
+```
+All errors are collected in the returned monitor.
+```
+monitor.RootMonitor().AllErrors()
+```
+
 ### Further Reading:
 
 - [ECA Language](ecal.md)
