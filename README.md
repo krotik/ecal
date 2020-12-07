@@ -7,6 +7,14 @@ ECAL
 
 ECAL is an ECA (Event Condition Action) language for concurrent event processing. ECAL can define event-based systems using rules which are triggered by events. ECAL is intended to be embedded into other software to provide an easy to use scripting language which can react to external events.
 
+<p>
+<a href="https://void.devt.de/pub/ecal/coverage.txt"><img src="https://void.devt.de/pub/ecal/test_result.svg" alt="Code coverage"></a>
+<a href="https://goreportcard.com/report/devt.de/krotik/ecal">
+<img src="https://goreportcard.com/badge/devt.de/krotik/ecal?style=flat-square" alt="Go Report Card"></a>
+<a href="https://godoc.org/devt.de/krotik/ecal">
+<img src="https://godoc.org/devt.de/krotik/ecal?status.svg" alt="Go Doc"></a>
+</p>
+
 Features
 --------
 - Simple intuitive syntax
@@ -18,7 +26,7 @@ Features
 
 ### Getting started
 
-Clone the repository and build the ECAL executable with a simple `make` command. You need Go 1.14 or higher.
+You can either download a pre-compiled package for Windows (win64) or Linux (amd64) [here](https://void.devt.de/pub/ecal) or clone the repository and build the ECAL executable with a simple `make` command. You need Go 1.14 or higher.
 
 Run `./ecal` to start an interactive session. You can now write simple one line statements and evaluate them:
 
@@ -72,6 +80,8 @@ $ sh run.sh
 ```
 
 The interpreter can be run in debug mode which adds debug commands to the console. Run the ECAL program in debug mode with: `sh debug.sh` - this will also start a debug server which external development environments can connect to. There is a [VSCode integration](ecal-support/README.md) available which allows debugging via a graphical interface.
+
+It is possible to package your ECAL project into an executable that can be run without a separate ECAL interpreter. Run the `sh pack.sh` and see the script for details.
 
 ### Embedding ECAL
 

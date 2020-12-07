@@ -14,6 +14,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"devt.de/krotik/ecal/parser"
 )
 
 func TestVarScopeSetMap(t *testing.T) {
@@ -115,65 +117,70 @@ global {
 		return
 	}
 
-	err = parentVS.SetValue("xx.a", []interface{}{3, 4, 5})
+	testVarScopeSetMapErrors(t, parentVS)
+}
 
-	if err == nil || err.Error() != "List xx needs a number index not: a" {
+func testVarScopeSetMapErrors(t *testing.T, parentVS parser.Scope) {
+
+	err := parentVS.SetValue("xx.a", []interface{}{3, 4, 5})
+
+	if err.Error() != "List xx needs a number index not: a" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.2.b", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "List xx.2 needs a number index not: b" {
+	if err.Error() != "List xx.2 needs a number index not: b" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.2.b.1", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "List xx.2 needs a number index not: b" {
+	if err.Error() != "List xx.2 needs a number index not: b" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.2.1.b.1", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Variable xx.2.1 is not a container" {
+	if err.Error() != "Variable xx.2.1 is not a container" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.2.1.2", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Variable xx.2.1 is not a container" {
+	if err.Error() != "Variable xx.2.1 is not a container" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.5", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Out of bounds access to list xx with index: 5" {
+	if err.Error() != "Out of bounds access to list xx with index: 5" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.5.1", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Out of bounds access to list xx with index: 5" {
+	if err.Error() != "Out of bounds access to list xx with index: 5" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("xx.2.5.1", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Out of bounds access to list xx.2 with index: 5" {
+	if err.Error() != "Out of bounds access to list xx.2 with index: 5" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}
 
 	err = parentVS.SetValue("yy.2.5.1", []interface{}{3, 4, 5})
 
-	if err == nil || err.Error() != "Variable yy is not a container" {
+	if err.Error() != "Variable yy is not a container" {
 		t.Error("Unexpected result:", parentVS.String(), err)
 		return
 	}

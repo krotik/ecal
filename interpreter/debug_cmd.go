@@ -23,7 +23,7 @@ import (
 )
 
 /*
-InbuildDebugCommandsMap contains the mapping of inbuild debug commands.
+DebugCommandsMap contains the mapping of inbuild debug commands.
 */
 var DebugCommandsMap = map[string]util.DebugCommand{
 	"breakonstart": &breakOnStartCommand{&inbuildDebugCommand{}},
@@ -231,7 +231,7 @@ func (c *contCommand) Run(debugger util.ECALDebugger, args []string) (interface{
 		return nil, fmt.Errorf("Need a thread ID and a command Resume, StepIn, StepOver or StepOut")
 	}
 
-	threadId, err := c.AssertNumParam(1, args[0])
+	threadID, err := c.AssertNumParam(1, args[0])
 
 	if err == nil {
 		cmdString := strings.ToLower(args[1])
@@ -248,7 +248,7 @@ func (c *contCommand) Run(debugger util.ECALDebugger, args []string) (interface{
 			return nil, fmt.Errorf("Invalid command %v - must be resume, stepin, stepover or stepout", cmdString)
 		}
 
-		debugger.Continue(threadId, cmd)
+		debugger.Continue(threadID, cmd)
 	}
 
 	return nil, err
@@ -258,7 +258,7 @@ func (c *contCommand) Run(debugger util.ECALDebugger, args []string) (interface{
 DocString returns a descriptive text about this command.
 */
 func (c *contCommand) DocString() string {
-	return "Continues a suspended thread. Specify <threadId> <Resume | StepIn | StepOver | StepOut>"
+	return "Continues a suspended thread. Specify <threadID> <Resume | StepIn | StepOver | StepOut>"
 }
 
 // describe
@@ -282,11 +282,11 @@ func (c *describeCommand) Run(debugger util.ECALDebugger, args []string) (interf
 		return nil, fmt.Errorf("Need a thread ID")
 	}
 
-	threadId, err := c.AssertNumParam(1, args[0])
+	threadID, err := c.AssertNumParam(1, args[0])
 
 	if err == nil {
 
-		res = debugger.Describe(threadId)
+		res = debugger.Describe(threadID)
 	}
 
 	return res, err
@@ -344,7 +344,7 @@ func (c *extractCommand) Run(debugger util.ECALDebugger, args []string) (interfa
 		return nil, fmt.Errorf("Need a thread ID, a variable name and a destination variable name")
 	}
 
-	threadId, err := c.AssertNumParam(1, args[0])
+	threadID, err := c.AssertNumParam(1, args[0])
 
 	if err == nil {
 		if !parser.NamePattern.MatchString(args[1]) || !parser.NamePattern.MatchString(args[2]) {
@@ -352,7 +352,7 @@ func (c *extractCommand) Run(debugger util.ECALDebugger, args []string) (interfa
 		}
 
 		if err == nil {
-			err = debugger.ExtractValue(threadId, args[1], args[2])
+			err = debugger.ExtractValue(threadID, args[1], args[2])
 		}
 	}
 
@@ -386,13 +386,13 @@ func (c *injectCommand) Run(debugger util.ECALDebugger, args []string) (interfac
 		return nil, fmt.Errorf("Need a thread ID, a variable name and an expression")
 	}
 
-	threadId, err := c.AssertNumParam(1, args[0])
+	threadID, err := c.AssertNumParam(1, args[0])
 
 	if err == nil {
 		varName := args[1]
 		expression := strings.Join(args[2:], " ")
 
-		err = debugger.InjectValue(threadId, varName, expression)
+		err = debugger.InjectValue(threadID, varName, expression)
 	}
 
 	return nil, err

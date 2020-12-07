@@ -18,78 +18,12 @@ import (
 	"testing"
 )
 
-func TestEventPump(t *testing.T) {
-	var res []string
+var res []string
+var source1 = &bytes.Buffer{}
+var errSource2 error = fmt.Errorf("TEST")
+var ep = NewEventPump()
 
-	source1 := &bytes.Buffer{}
-	source2 := errors.New("TEST")
-
-	ep := NewEventPump()
-
-	// Add observer 1
-
-	ep.AddObserver("event1", source1, func(event string, eventSource interface{}) {
-		if eventSource != source1 {
-			t.Error("Unexpected event source:", eventSource)
-			return
-		}
-		res = append(res, "1")
-		sort.Strings(res)
-
-	})
-
-	// Add observer 2
-
-	ep.AddObserver("event2", source2, func(event string, eventSource interface{}) {
-		if eventSource != source2 {
-			t.Error("Unexpected event source:", eventSource)
-			return
-		}
-		res = append(res, "2")
-		sort.Strings(res)
-
-	})
-
-	// Add observer 3
-
-	ep.AddObserver("event2", source2, func(event string, eventSource interface{}) {
-		if eventSource != source2 {
-			t.Error("Unexpected event source:", eventSource)
-			return
-		}
-		res = append(res, "3")
-		sort.Strings(res)
-
-	})
-
-	// Run the tests
-
-	// Test 1 straight forward case
-
-	ep.PostEvent("event1", source1)
-
-	if fmt.Sprint(res) != "[1]" {
-		t.Error("Unexpected result:", res)
-		return
-	}
-
-	res = make([]string, 0) // Reset res
-
-	ep.PostEvent("event2", source2)
-
-	if fmt.Sprint(res) != "[2 3]" {
-		t.Error("Unexpected result:", res)
-		return
-	}
-
-	res = make([]string, 0) // Reset res
-
-	ep.PostEvent("event1", source2)
-
-	if fmt.Sprint(res) != "[]" {
-		t.Error("Unexpected result:", res)
-		return
-	}
+func addObservers2(t *testing.T) {
 
 	// Add observer 4
 
@@ -111,18 +45,54 @@ func TestEventPump(t *testing.T) {
 
 	// Add observer 6
 
-	ep.AddObserver("", source2, func(event string, eventSource interface{}) {
-		if eventSource != source2 {
+	ep.AddObserver("", errSource2, func(event string, eventSource interface{}) {
+		if eventSource != errSource2 {
 			t.Error("Unexpected event source:", eventSource)
 			return
 		}
 		res = append(res, "6")
 		sort.Strings(res)
 	})
+}
+
+func TestEventPump(t *testing.T) {
+
+	addObservers1(t)
+
+	// Run the tests
+
+	// Test 1 straight forward case
+
+	ep.PostEvent("event1", source1)
+
+	if fmt.Sprint(res) != "[1]" {
+		t.Error("Unexpected result:", res)
+		return
+	}
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event1", source2)
+	ep.PostEvent("event2", errSource2)
+
+	if fmt.Sprint(res) != "[2 3]" {
+		t.Error("Unexpected result:", res)
+		return
+	}
+
+	res = make([]string, 0) // Reset res
+
+	ep.PostEvent("event1", errSource2)
+
+	if fmt.Sprint(res) != "[]" {
+		t.Error("Unexpected result:", res)
+		return
+	}
+
+	addObservers2(t)
+
+	res = make([]string, 0) // Reset res
+
+	ep.PostEvent("event1", errSource2)
 
 	if fmt.Sprint(res) != "[5 6]" {
 		t.Error("Unexpected result:", res)
@@ -131,7 +101,7 @@ func TestEventPump(t *testing.T) {
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event3", source2)
+	ep.PostEvent("event3", errSource2)
 
 	if fmt.Sprint(res) != "[5 6]" {
 		t.Error("Unexpected result:", res)
@@ -160,28 +130,28 @@ func TestEventPump(t *testing.T) {
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event2", source2)
+	ep.PostEvent("event2", errSource2)
 
 	if fmt.Sprint(res) != "[2 3 5 6]" {
 		t.Error("Unexpected result:", res)
 		return
 	}
-	ep.RemoveObservers("event2", source2)
+	ep.RemoveObservers("event2", errSource2)
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event2", source2)
+	ep.PostEvent("event2", errSource2)
 
 	if fmt.Sprint(res) != "[5 6]" {
 		t.Error("Unexpected result:", res)
 		return
 	}
 
-	ep.RemoveObservers("", source2) // Remove all handlers specific to source 2
+	ep.RemoveObservers("", errSource2) // Remove all handlers specific to source 2
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event2", source2)
+	ep.PostEvent("event2", errSource2)
 
 	if fmt.Sprint(res) != "[5]" {
 		t.Error("Unexpected result:", res)
@@ -199,7 +169,7 @@ func TestEventPump(t *testing.T) {
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event2", source2)
+	ep.PostEvent("event2", errSource2)
 
 	if fmt.Sprint(res) != "[5]" {
 		t.Error("Unexpected result:", res)
@@ -210,7 +180,7 @@ func TestEventPump(t *testing.T) {
 
 	res = make([]string, 0) // Reset res
 
-	ep.PostEvent("event2", source2)
+	ep.PostEvent("event2", errSource2)
 
 	if fmt.Sprint(res) != "[]" {
 		t.Error("Unexpected result:", res)
@@ -225,6 +195,45 @@ func TestEventPump(t *testing.T) {
 		t.Error("Event map should be empty at this point:", ep.eventsObservers)
 		return
 	}
+}
+
+func addObservers1(t *testing.T) {
+
+	// Add observer 1
+
+	ep.AddObserver("event1", source1, func(event string, eventSource interface{}) {
+		if eventSource != source1 {
+			t.Error("Unexpected event source:", eventSource)
+			return
+		}
+		res = append(res, "1")
+		sort.Strings(res)
+
+	})
+
+	// Add observer 2
+
+	ep.AddObserver("event2", errSource2, func(event string, eventSource interface{}) {
+		if eventSource != errSource2 {
+			t.Error("Unexpected event source:", eventSource)
+			return
+		}
+		res = append(res, "2")
+		sort.Strings(res)
+
+	})
+
+	// Add observer 3
+
+	ep.AddObserver("event2", errSource2, func(event string, eventSource interface{}) {
+		if eventSource != errSource2 {
+			t.Error("Unexpected event source:", eventSource)
+			return
+		}
+		res = append(res, "3")
+		sort.Strings(res)
+
+	})
 }
 
 func TestWrongPostEvent(t *testing.T) {

@@ -16,10 +16,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"devt.de/krotik/ecal/parser"
 )
 
+/*
+Format formats a given set of ECAL files.
+*/
 func Format() error {
 	var err error
 
@@ -30,17 +34,17 @@ func Format() error {
 	showHelp := flag.Bool("help", false, "Show this help message")
 
 	flag.Usage = func() {
-		fmt.Println()
-		fmt.Println(fmt.Sprintf("Usage of %s format [options]", os.Args[0]))
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
+		fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Usage of %s format [options]", os.Args[0]))
+		fmt.Fprintln(flag.CommandLine.Output())
 		flag.PrintDefaults()
-		fmt.Println()
-		fmt.Println("This tool will format all ECAL files in a directory structure.")
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
+		fmt.Fprintln(flag.CommandLine.Output(), "This tool will format all ECAL files in a directory structure.")
+		fmt.Fprintln(flag.CommandLine.Output())
 	}
 
 	if len(os.Args) >= 2 {
-		flag.CommandLine.Parse(os.Args[2:])
+		flag.CommandLine.Parse(osArgs[2:])
 
 		if *showHelp {
 			flag.Usage()
@@ -48,26 +52,28 @@ func Format() error {
 		}
 	}
 
-	fmt.Println(fmt.Sprintf("Formatting all %v files in %v", *ext, *dir))
+	fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Formatting all %v files in %v", *ext, *dir))
 
-	err = filepath.Walk(".",
+	err = filepath.Walk(*dir,
 		func(path string, i os.FileInfo, err error) error {
 			if err == nil && !i.IsDir() {
 				var data []byte
 				var ast *parser.ASTNode
 				var srcFormatted string
 
-				if data, err = ioutil.ReadFile(path); err == nil {
-					var ferr error
+				if strings.HasSuffix(path, *ext) {
+					if data, err = ioutil.ReadFile(path); err == nil {
+						var ferr error
 
-					if ast, ferr = parser.Parse(path, string(data)); ferr == nil {
-						if srcFormatted, ferr = parser.PrettyPrint(ast); ferr == nil {
-							ioutil.WriteFile(path, []byte(srcFormatted), i.Mode())
+						if ast, ferr = parser.Parse(path, string(data)); ferr == nil {
+							if srcFormatted, ferr = parser.PrettyPrint(ast); ferr == nil {
+								ioutil.WriteFile(path, []byte(srcFormatted), i.Mode())
+							}
 						}
-					}
 
-					if ferr != nil {
-						fmt.Fprintln(os.Stderr, fmt.Sprintf("Could not format %v: %v", path, ferr))
+						if ferr != nil {
+							fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Could not format %v: %v", path, ferr))
+						}
 					}
 				}
 			}

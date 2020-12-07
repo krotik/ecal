@@ -156,57 +156,7 @@ func (s *varsScope) setValue(varName string, varValue interface{}) error {
 		if container, ok, _ := s.getValue(cFields[0]); ok {
 
 			if len(cFields) > 2 {
-
-				var containerAccess func(fields []string)
-
-				containerAccess = func(fields []string) {
-
-					// Get inner container
-
-					if mapContainer, ok := container.(map[interface{}]interface{}); ok {
-
-						if container, ok = mapContainer[fields[0]]; !ok {
-							err = fmt.Errorf("Container field %v does not exist",
-								strings.Join(cFields[:len(cFields)-len(fields)+1], "."))
-						}
-
-					} else if listContainer, ok := container.([]interface{}); ok {
-						var index int
-
-						if index, err = strconv.Atoi(fmt.Sprint(fields[0])); err == nil {
-
-							if index < 0 {
-
-								// Handle negative numbers
-
-								index = len(listContainer) + index
-							}
-
-							if index < len(listContainer) {
-								container = listContainer[index]
-							} else {
-								err = fmt.Errorf("Out of bounds access to list %v with index: %v",
-									strings.Join(cFields[:len(cFields)-len(fields)], "."), index)
-							}
-
-						} else {
-							container = nil
-							err = fmt.Errorf("List %v needs a number index not: %v",
-								strings.Join(cFields[:len(cFields)-len(fields)], "."), fields[0])
-						}
-
-					} else {
-						container = nil
-						err = fmt.Errorf("Variable %v is not a container",
-							strings.Join(cFields[:len(cFields)-len(fields)], "."))
-					}
-
-					if err == nil && len(fields) > 2 {
-						containerAccess(fields[1:])
-					}
-				}
-
-				containerAccess(cFields[1:])
+				container, err = s.containerAccess(container, cFields, cFields[1:])
 			}
 
 			if err == nil && container != nil {
@@ -263,6 +213,59 @@ func (s *varsScope) setValue(varName string, varValue interface{}) error {
 	s.storage[varName] = varValue
 
 	return err
+}
+
+/*
+containerAccess recursively accesses a field in a container structure.
+*/
+func (s *varsScope) containerAccess(container interface{}, cFields []string, fields []string) (interface{}, error) {
+	var err error
+
+	// Get inner container
+
+	if mapContainer, ok := container.(map[interface{}]interface{}); ok {
+
+		if container, ok = mapContainer[fields[0]]; !ok {
+			err = fmt.Errorf("Container field %v does not exist",
+				strings.Join(cFields[:len(cFields)-len(fields)+1], "."))
+		}
+
+	} else if listContainer, ok := container.([]interface{}); ok {
+		var index int
+
+		if index, err = strconv.Atoi(fmt.Sprint(fields[0])); err == nil {
+
+			if index < 0 {
+
+				// Handle negative numbers
+
+				index = len(listContainer) + index
+			}
+
+			if index < len(listContainer) {
+				container = listContainer[index]
+			} else {
+				err = fmt.Errorf("Out of bounds access to list %v with index: %v",
+					strings.Join(cFields[:len(cFields)-len(fields)], "."), index)
+			}
+
+		} else {
+			container = nil
+			err = fmt.Errorf("List %v needs a number index not: %v",
+				strings.Join(cFields[:len(cFields)-len(fields)], "."), fields[0])
+		}
+
+	} else {
+		container = nil
+		err = fmt.Errorf("Variable %v is not a container",
+			strings.Join(cFields[:len(cFields)-len(fields)], "."))
+	}
+
+	if err == nil && len(fields) > 2 {
+		container, err = s.containerAccess(container, cFields, fields[1:])
+	}
+
+	return container, err
 }
 
 /*

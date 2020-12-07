@@ -28,7 +28,7 @@ import * as path from "path";
 
 /**
  * ECALDebugArguments are the arguments which VSCode can pass to the debug adapter.
- * This defines the parameter which a VSCode instance using the ECAL extention can pass to the
+ * This defines the parameter which a VSCode instance using the ECAL extension can pass to the
  * debug adapter from a lauch configuration ('.vscode/launch.json') in a project folder.
  */
 interface ECALDebugArguments extends DebugProtocol.LaunchRequestArguments {

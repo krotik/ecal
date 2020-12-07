@@ -142,7 +142,7 @@ func TestProcessorSimpleCascade(t *testing.T) {
 	rootm.SetFinishHandler(func(p Processor) {
 		log.WriteString("finished!")
 	})
-	proc.AddEvent(e, rootm)
+	proc.AddEventAndWait(e, rootm)
 
 	if err := proc.AddRule(rule3); err.Error() != "Cannot add rule if the processor has not stopped" {
 		t.Error("Unexpected error:", err)
@@ -187,7 +187,7 @@ finished!` {
 
 	// Push a root event
 
-	proc.AddEvent(&Event{
+	proc.AddEventAndWait(&Event{
 		"InitialEvent",
 		[]string{"core", "main", "event1"},
 		nil,
@@ -700,7 +700,7 @@ func TestProcessorSimpleErrorHandling(t *testing.T) {
 
 	// Push a root event
 
-	mon, err := proc.AddEvent(&Event{
+	mon, err := proc.AddEventAndWait(&Event{
 		"InitialEvent",
 		[]string{"core", "main", "event1"},
 		map[interface{}]interface{}{"name": "foo", "test": "123"},
@@ -720,7 +720,7 @@ func TestProcessorSimpleErrorHandling(t *testing.T) {
 	}
 
 	_, err = proc.AddEvent(&Event{}, nil)
-	if err.Error() != "Cannot add event if the processor is not running" {
+	if err.Error() != "Cannot add event if the processor is stopping or not running" {
 		t.Error("Unexpected error", err)
 		return
 	}
@@ -749,25 +749,30 @@ InitialEvent -> event2 -> event3 -> TestRule3 : testerror2]` {
 		return
 	}
 
+	testProcessorAdvancedErrorHandling(t, proc, &recordedErrors)
+}
+
+func testProcessorAdvancedErrorHandling(t *testing.T, proc Processor, recordedErrorsPtr *int) {
+
 	// Second test will fail on the first failed rule in an event trigger sequence
 
 	proc.SetFailOnFirstErrorInTriggerSequence(true)
 
 	proc.Start()
 
-	mon, err = proc.AddEvent(&Event{
+	mon, err := proc.AddEventAndWait(&Event{
 		"InitialEvent",
 		[]string{"core", "main", "event1"},
 		map[interface{}]interface{}{"name": "foo", "test": "123"},
 	}, nil)
-	rmon, ok = mon.(*RootMonitor)
+	rmon, ok := mon.(*RootMonitor)
 	if !ok {
 		t.Error("Root monitor expected:", mon, err)
 		return
 	}
 	proc.Finish()
 
-	errs = rmon.AllErrors()
+	errs := rmon.AllErrors()
 
 	if len(errs) != 2 {
 		t.Error("Unexpected number of errors:", len(errs))
@@ -781,8 +786,8 @@ InitialEvent -> event2 -> event3 -> TestRule3 : testerror2]` {
 		return
 	}
 
-	if recordedErrors != 1 {
-		t.Error("Unexpected number of recorded errors:", recordedErrors)
+	if *recordedErrorsPtr != 1 {
+		t.Error("Unexpected number of recorded errors:", *recordedErrorsPtr)
 		return
 	}
 
@@ -797,8 +802,8 @@ InitialEvent -> event2 -> event3 -> TestRule3 : testerror2]` {
 		map[interface{}]interface{}{"name": "foo", "test": "123"},
 	}, nil)
 
-	if mon != nil {
-		t.Error("Nothing should have triggered")
+	if mon != nil || err != nil {
+		t.Error("Nothing should have triggered: ", err)
 		return
 	}
 
@@ -833,8 +838,8 @@ InitialEvent -> event2 -> event3 -> TestRule3 : testerror2]` {
 		return
 	}
 
-	if recordedErrors != 3 {
-		t.Error("Unexpected number of recorded errors:", recordedErrors)
+	if *recordedErrorsPtr != 3 {
+		t.Error("Unexpected number of recorded errors:", *recordedErrorsPtr)
 		return
 	}
 

@@ -104,7 +104,7 @@ type ECALDebugger interface {
 	/*
 	   StopThreads will continue all suspended threads and set them to be killed.
 	   Returns true if a waiting thread was resumed. Can wait for threads to end
-	   by ensuring that for at least d time no state change occured.
+	   by ensuring that for at least d time no state change occurred.
 	*/
 	StopThreads(d time.Duration) bool
 
@@ -157,18 +157,18 @@ type ECALDebugger interface {
 		ExtractValue copies a value from a suspended thread into the
 		global variable scope.
 	*/
-	ExtractValue(threadId uint64, varName string, destVarName string) error
+	ExtractValue(threadID uint64, varName string, destVarName string) error
 
 	/*
 		InjectValue copies a value from an expression (using the global
 		variable scope) into a suspended thread.
 	*/
-	InjectValue(threadId uint64, varName string, expression string) error
+	InjectValue(threadID uint64, varName string, expression string) error
 
 	/*
 	   Continue will continue a suspended thread.
 	*/
-	Continue(threadId uint64, contType ContType)
+	Continue(threadID uint64, contType ContType)
 
 	/*
 		Status returns the current status of the debugger.
@@ -176,9 +176,9 @@ type ECALDebugger interface {
 	Status() interface{}
 
 	/*
-	   Describe decribes a thread currently observed by the debugger.
+	   Describe describes a thread currently observed by the debugger.
 	*/
-	Describe(threadId uint64) interface{}
+	Describe(threadID uint64) interface{}
 }
 
 /*

@@ -12,11 +12,28 @@ package tool
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"regexp"
 	"strings"
 
 	"devt.de/krotik/common/stringutil"
 )
+
+/*
+osArgs is a local copy of os.Args (used for unit tests)
+*/
+var osArgs = os.Args
+
+/*
+osStderr is a local copy of os.Stderr (used for unit tests)
+*/
+var osStderr io.Writer = os.Stderr
+
+/*
+osExit is a local variable pointing to os.Exit (used for unit tests)
+*/
+var osExit func(int) = os.Exit
 
 /*
 CLIInputHandler is a handler object for CLI input.

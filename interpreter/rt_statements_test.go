@@ -361,13 +361,16 @@ Info->4`[1:] {
 		t.Error("Unexpected result: ", res)
 		return
 	}
+}
+
+func TestLoopStatements2(t *testing.T) {
 
 	// Test nested loops
 
-	vs = scope.NewScope(scope.GlobalScope)
-	buf = addLogFunction(vs)
+	vs := scope.NewScope(scope.GlobalScope)
+	buf := addLogFunction(vs)
 
-	_, err = UnitTestEvalAndAST(
+	_, err := UnitTestEvalAndAST(
 		`
 for a in range(10, 3, -3) {
   for b in range(1, 3, 1) {
@@ -571,12 +574,16 @@ Info->10`[1:] {
 		return
 	}
 
+}
+
+func TestLoopStatements3(t *testing.T) {
+
 	// Loop over lists
 
-	vs = scope.NewScope(scope.GlobalScope)
-	buf = addLogFunction(vs)
+	vs := scope.NewScope(scope.GlobalScope)
+	buf := addLogFunction(vs)
 
-	_, err = UnitTestEvalAndAST(
+	_, err := UnitTestEvalAndAST(
 		`
 for a in [1,2] {
   for b in [1,2,3,"Hans", 4] {
@@ -816,10 +823,14 @@ for [1, b] in x {
 		t.Error("Unexpected result:", err)
 		return
 	}
+}
+
+func TestLoopStatements4(t *testing.T) {
+	vs := scope.NewScope(scope.GlobalScope)
 
 	// Test continue
 
-	_, err = UnitTestEval(`
+	_, err := UnitTestEval(`
 for [a] in [1,2,3] {
   continue
   [a, b] := "Hans"

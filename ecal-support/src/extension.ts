@@ -18,7 +18,7 @@ class InlineDebugAdapterFactory
   createDebugAdapterDescriptor(
     _session: vscode.DebugSession
   ): ProviderResult<vscode.DebugAdapterDescriptor> {
-    // Declare the ECALDebugSession as an DebugAdapterInlineImplementation so extention and adapter can
+    // Declare the ECALDebugSession as an DebugAdapterInlineImplementation so extension and adapter can
     // run in-process (making it possible to easily debug the adapter)
     return new vscode.DebugAdapterInlineImplementation(new ECALDebugSession());
   }

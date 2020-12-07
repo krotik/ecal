@@ -83,11 +83,11 @@ mystuff.add(compute(5), 1)
 
 	// Each thread which evaluates the Runtime of an AST should get a unique thread ID
 
-	var threadId uint64 = 1
+	var threadID uint64 = 1
 
 	// Evaluate the Runtime of an AST with a variable scope
 
-	res, err := ast.Runtime.Eval(vs, make(map[string]interface{}), threadId)
+	res, err := ast.Runtime.Eval(vs, make(map[string]interface{}), threadID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,6 +123,9 @@ AddFunc is a simple add function which calculates the sum of two numbers.
 type AddFunc struct {
 }
 
+/*
+Run executes the add function
+*/
 func (f *AddFunc) Run(instanceID string, vs parser.Scope, is map[string]interface{}, tid uint64, args []interface{}) (interface{}, error) {
 
 	// This should have some proper error checking
@@ -133,6 +136,9 @@ func (f *AddFunc) Run(instanceID string, vs parser.Scope, is map[string]interfac
 	return args[0].(float64) + args[1].(float64), nil
 }
 
+/*
+DocString returns the doc string for the add function.
+*/
 func (f *AddFunc) DocString() (string, error) {
 	return "Sum up two numbers", nil
 }

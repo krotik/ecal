@@ -287,7 +287,6 @@ The following nested map structure is expected:
 func ASTFromJSONObject(jsonAST map[string]interface{}) (*ASTNode, error) {
 	var astMeta []MetaData
 	var astChildren []*ASTNode
-	var pos, line, linepos int
 
 	nodeID := TokenANY
 
@@ -302,43 +301,22 @@ func ASTFromJSONObject(jsonAST map[string]interface{}) (*ASTNode, error) {
 		}
 	}
 
-	value, ok := jsonAST["value"]
-	if !ok {
-		value = ""
+	getVal := func(k string, d interface{}) (interface{}, int) {
+		value, ok := jsonAST[k]
+		if !ok {
+			value = d
+		}
+		numVal, _ := strconv.Atoi(fmt.Sprint(value))
+		return value, numVal
 	}
 
-	identifier, ok := jsonAST["identifier"]
-	if !ok {
-		identifier = false
-	}
-
-	allowescapes, ok := jsonAST["allowescapes"]
-	if !ok {
-		allowescapes = false
-	}
-
-	if posString, ok := jsonAST["pos"]; ok {
-		pos, _ = strconv.Atoi(fmt.Sprint(posString))
-	} else {
-		pos = 0
-	}
-
-	if lineString, ok := jsonAST["line"]; ok {
-		line, _ = strconv.Atoi(fmt.Sprint(lineString))
-	} else {
-		line = 0
-	}
-
-	if lineposString, ok := jsonAST["linepos"]; ok {
-		linepos, _ = strconv.Atoi(fmt.Sprint(lineposString))
-	} else {
-		linepos = 0
-	}
-
-	source, ok := jsonAST["source"]
-	if !ok {
-		source = ""
-	}
+	value, _ := getVal("value", "")
+	identifier, _ := getVal("identifier", false)
+	allowescapes, _ := getVal("allowescapes", false)
+	_, pos := getVal("pos", "")
+	_, line := getVal("line", "")
+	_, linepos := getVal("linepos", "")
+	source, _ := getVal("source", "")
 
 	// Create meta data
 

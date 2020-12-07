@@ -427,7 +427,7 @@ func ndSkink(p *parser, self *ASTNode) (*ASTNode, error) {
 
 		// Parse the rest of the parameters as children until we reach the body
 
-		for err == nil && IsNotEndAndNotToken(p, TokenLBRACE) {
+		for err == nil && IsNotEndAndNotTokens(p, []LexTokenID{TokenLBRACE}) {
 			if exp, err = p.run(150); err == nil {
 				self.Children = append(self.Children, exp)
 
@@ -471,7 +471,7 @@ func ndFunc(p *parser, self *ASTNode) (*ASTNode, error) {
 		params := astNodeMap[TokenPARAMS].instance(p, nil)
 		self.Children = append(self.Children, params)
 
-		for err == nil && IsNotEndAndNotToken(p, TokenRPAREN) {
+		for err == nil && IsNotEndAndNotTokens(p, []LexTokenID{TokenRPAREN}) {
 
 			// Parse all the expressions inside
 
@@ -535,6 +535,8 @@ func ndIdentifier(p *parser, self *ASTNode) (*ASTNode, error) {
 			err = parseFuncCall(current)
 		} else if p.node.Token.ID == TokenLBRACK && p.node.Token.Lline == self.Token.Lline {
 
+			skipToken(p, TokenLBRACK)
+
 			// Composition access needs to be on the same line as the identifier
 			// as we might otherwise have a list
 
@@ -568,7 +570,7 @@ func ndIdentifier(p *parser, self *ASTNode) (*ASTNode, error) {
 
 		// Read in parameters
 
-		for err == nil && IsNotEndAndNotToken(p, TokenRPAREN) {
+		for err == nil && IsNotEndAndNotTokens(p, []LexTokenID{TokenRPAREN}) {
 
 			// Parse all the expressions inside the directives
 
@@ -582,8 +584,7 @@ func ndIdentifier(p *parser, self *ASTNode) (*ASTNode, error) {
 		}
 
 		if err == nil {
-			err = skipToken(p, TokenRPAREN)
-			if err == nil {
+			if err = skipToken(p, TokenRPAREN); err == nil {
 				err = parseMore(current)
 			}
 		}
@@ -593,22 +594,18 @@ func ndIdentifier(p *parser, self *ASTNode) (*ASTNode, error) {
 
 	parseCompositionAccess = func(current *ASTNode) error {
 		var exp *ASTNode
+		var err error
 
-		err := skipToken(p, TokenLBRACK)
+		ca := astNodeMap[TokenCOMPACCESS].instance(p, nil)
+		current.Children = append(current.Children, ca)
 
-		if err == nil {
+		// Parse all the expressions inside the directives
 
-			ca := astNodeMap[TokenCOMPACCESS].instance(p, nil)
-			current.Children = append(current.Children, ca)
+		if exp, err = p.run(0); err == nil {
+			ca.Children = append(ca.Children, exp)
 
-			// Parse all the expressions inside the directives
-
-			if exp, err = p.run(0); err == nil {
-				ca.Children = append(ca.Children, exp)
-
-				if err = skipToken(p, TokenRBRACK); err == nil {
-					err = parseMore(current)
-				}
+			if err = skipToken(p, TokenRBRACK); err == nil {
+				err = parseMore(current)
 			}
 		}
 
@@ -631,7 +628,7 @@ func ndList(p *parser, self *ASTNode) (*ASTNode, error) {
 
 	// Get the inner expression
 
-	for err == nil && IsNotEndAndNotToken(p, TokenRBRACK) {
+	for err == nil && IsNotEndAndNotTokens(p, []LexTokenID{TokenRBRACK}) {
 
 		// Parse all the expressions inside
 
@@ -666,7 +663,7 @@ func ndMap(p *parser, self *ASTNode) (*ASTNode, error) {
 
 	// Get the inner expression
 
-	for err == nil && IsNotEndAndNotToken(p, TokenRBRACE) {
+	for err == nil && IsNotEndAndNotTokens(p, []LexTokenID{TokenRBRACE}) {
 
 		// Parse all the expressions inside
 
@@ -778,54 +775,43 @@ func ndLoop(p *parser, self *ASTNode) (*ASTNode, error) {
 ndTry is used to parse a try block.
 */
 func ndTry(p *parser, self *ASTNode) (*ASTNode, error) {
-
 	try, err := parseInnerStatements(p, self)
 
-	if p.node.Token.ID != TokenFINALLY {
+	for err == nil && IsNotEndAndToken(p, TokenEXCEPT) {
+		except := p.node
 
-		for err == nil && IsNotEndAndToken(p, TokenEXCEPT) {
+		err = acceptChild(p, try, TokenEXCEPT)
 
-			except := p.node
+		for err == nil &&
+			IsNotEndAndNotTokens(p, []LexTokenID{TokenAS, TokenIDENTIFIER, TokenLBRACE}) {
 
-			err = acceptChild(p, try, TokenEXCEPT)
+			if err = acceptChild(p, except, TokenSTRING); err == nil {
 
-			if err == nil {
-				for err == nil &&
-					IsNotEndAndNotToken(p, TokenAS) &&
-					IsNotEndAndNotToken(p, TokenIDENTIFIER) &&
-					IsNotEndAndNotToken(p, TokenLBRACE) {
+				// Skip commas
 
-					if err = acceptChild(p, except, TokenSTRING); err == nil {
-
-						// Skip commas
-
-						if p.node.Token.ID == TokenCOMMA {
-							err = skipToken(p, TokenCOMMA)
-						}
-					}
-				}
-
-				if err == nil {
-
-					if p.node.Token.ID == TokenAS {
-						as := p.node
-
-						err = acceptChild(p, except, TokenAS)
-
-						if err == nil {
-							err = acceptChild(p, as, TokenIDENTIFIER)
-						}
-
-					} else if p.node.Token.ID == TokenIDENTIFIER {
-
-						err = acceptChild(p, except, TokenIDENTIFIER)
-					}
-				}
-
-				if err == nil {
-					_, err = parseInnerStatements(p, except)
+				if p.node.Token.ID == TokenCOMMA {
+					err = skipToken(p, TokenCOMMA)
 				}
 			}
+		}
+
+		if err == nil {
+
+			if p.node.Token.ID == TokenAS {
+				as := p.node
+
+				if err = acceptChild(p, except, TokenAS); err == nil {
+					err = acceptChild(p, as, TokenIDENTIFIER)
+				}
+
+			} else if p.node.Token.ID == TokenIDENTIFIER {
+
+				err = acceptChild(p, except, TokenIDENTIFIER)
+			}
+		}
+
+		if err == nil {
+			_, err = parseInnerStatements(p, except)
 		}
 	}
 
@@ -885,10 +871,14 @@ func IsNotEndAndToken(p *parser, i LexTokenID) bool {
 }
 
 /*
-IsNotEndAndNotToken checks if the next token is not of a specific type or the end has been reached.
+IsNotEndAndNotTokens checks if the next token is not of a specific type or the end has been reached.
 */
-func IsNotEndAndNotToken(p *parser, i LexTokenID) bool {
-	return p.node != nil && p.node.Name != NodeEOF && p.node.Token.ID != i
+func IsNotEndAndNotTokens(p *parser, tokens []LexTokenID) bool {
+	ret := p.node != nil && p.node.Name != NodeEOF
+	for _, t := range tokens {
+		ret = ret && p.node.Token.ID != t
+	}
+	return ret
 }
 
 /*

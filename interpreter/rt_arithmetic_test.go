@@ -71,8 +71,11 @@ minus
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
+}
 
-	res, err = UnitTestEvalAndAST(
+func TestSimpleArithmetics2(t *testing.T) {
+
+	res, err := UnitTestEvalAndAST(
 		`-5.2 - 2.2`, nil,
 		`
 minus

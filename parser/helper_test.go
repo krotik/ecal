@@ -114,14 +114,17 @@ identifier: a
 		t.Error("Unexpected result: ", msg)
 		return
 	}
+}
 
-	n, err = ParseWithRuntime("", "- 1", &DummyRuntimeProvider{})
+func TestASTNode2(t *testing.T) {
+
+	n, err := ParseWithRuntime("", "- 1", &DummyRuntimeProvider{})
 	if err != nil {
 		t.Error("Cannot parse test AST:", err)
 		return
 	}
 
-	n2, err = ParseWithRuntime("", "a - b", &DummyRuntimeProvider{})
+	n2, err := ParseWithRuntime("", "a - b", &DummyRuntimeProvider{})
 	if err != nil {
 		t.Error("Cannot parse test AST:", err)
 		return
@@ -192,14 +195,17 @@ number: 1 # wurst
 		t.Error("Unexpected result: ", msg)
 		return
 	}
+}
 
-	n, err = ParseWithRuntime("", "1 #test", &DummyRuntimeProvider{})
+func TestASTNode3(t *testing.T) {
+
+	n, err := ParseWithRuntime("", "1 #test", &DummyRuntimeProvider{})
 	if err != nil {
 		t.Error("Cannot parse test AST:", err)
 		return
 	}
 
-	n2, err = ParseWithRuntime("", "/*test*/ 1", &DummyRuntimeProvider{})
+	n2, err := ParseWithRuntime("", "/*test*/ 1", &DummyRuntimeProvider{})
 	if err != nil {
 		t.Error("Cannot parse test AST:", err)
 		return
@@ -241,6 +247,9 @@ number: 1 # test
 		t.Error("Unexpected result: ", msg)
 		return
 	}
+}
+
+func TestASTNode4(t *testing.T) {
 
 	// Test building an AST from an invalid
 
@@ -299,6 +308,11 @@ func TestLABuffer(t *testing.T) {
 		return
 	}
 
+	testLABufferPeek(t, buf)
+}
+
+func testLABufferPeek(t *testing.T, buf *LABuffer) {
+
 	// Check Peek
 
 	if token, ok := buf.Peek(0); token.Val != "3" || !ok {
@@ -320,6 +334,10 @@ func TestLABuffer(t *testing.T) {
 		t.Error("Unexpected result: ", token, ok)
 		return
 	}
+	testLABufferContinue(t, buf)
+}
+
+func testLABufferContinue(t *testing.T, buf *LABuffer) {
 
 	// Continue
 
@@ -352,6 +370,10 @@ func TestLABuffer(t *testing.T) {
 		t.Error("Unexpected result: ", token, ok)
 		return
 	}
+	testLABufferPeek2(t, buf)
+}
+
+func testLABufferPeek2(t *testing.T, buf *LABuffer) {
 
 	// Check Peek
 
@@ -369,6 +391,11 @@ func TestLABuffer(t *testing.T) {
 		t.Error("Unexpected result: ", token, ok)
 		return
 	}
+
+	testLABufferContinue2(t, buf)
+}
+
+func testLABufferContinue2(t *testing.T, buf *LABuffer) {
 
 	// Continue
 
@@ -395,25 +422,28 @@ func TestLABuffer(t *testing.T) {
 		t.Error("Unexpected result: ", token, ok)
 		return
 	}
+}
+
+func TestLABuffer2(t *testing.T) {
 
 	// New Buffer
 
-	buf = NewLABuffer(Lex("test", "1 2 3"), 3)
+	buf := NewLABuffer(Lex("test", "1 2 3"), 3)
 
-	if token, ok := buf.Next(); token.Val != "1" || !ok {
-		t.Error("Unexpected result: ", token, ok)
+	if token, _ := buf.Next(); token.Val != "1" {
+		t.Error("Unexpected result: ", token)
 		return
 	}
 
-	if token, ok := buf.Next(); token.Val != "2" || !ok {
-		t.Error("Unexpected result: ", token, ok)
+	if token, _ := buf.Next(); token.Val != "2" {
+		t.Error("Unexpected result: ", token)
 		return
 	}
 
 	// Check Peek
 
-	if token, ok := buf.Peek(0); token.Val != "3" || !ok {
-		t.Error("Unexpected result: ", token, ok)
+	if token, _ := buf.Peek(0); token.Val != "3" {
+		t.Error("Unexpected result: ", token)
 		return
 	}
 
@@ -427,8 +457,8 @@ func TestLABuffer(t *testing.T) {
 		return
 	}
 
-	if token, ok := buf.Next(); token.Val != "3" || !ok {
-		t.Error("Unexpected result: ", token, ok)
+	if token, _ := buf.Next(); token.Val != "3" {
+		t.Error("Unexpected result: ", token)
 		return
 	}
 
@@ -436,10 +466,13 @@ func TestLABuffer(t *testing.T) {
 		t.Error("Unexpected result: ", token, ok)
 		return
 	}
+}
+
+func TestLABuffer3(t *testing.T) {
 
 	// New Buffer - test edge case
 
-	buf = NewLABuffer(Lex("test", ""), 0)
+	buf := NewLABuffer(Lex("test", ""), 0)
 
 	if token, ok := buf.Peek(0); token.ID != TokenEOF || !ok {
 		t.Error("Unexpected result: ", token, ok)

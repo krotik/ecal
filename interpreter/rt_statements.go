@@ -253,153 +253,180 @@ func (rt *loopRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint
 			}
 
 		} else if rt.node.Children[0].Name == parser.NodeIN {
-			var iterator func() (interface{}, error)
-			var val interface{}
 
-			it := rt.node.Children[0].Children[1]
+			err = rt.handleIterator(vs, is, tid)
+		}
+	}
 
-			val, err = it.Runtime.Eval(vs, is, tid)
+	return nil, err
+}
 
-			// Create an iterator object
+/*
+handleIterator handles iterator functions for loops.
+*/
+func (rt *loopRuntime) handleIterator(vs parser.Scope, is map[string]interface{}, tid uint64) error {
+	var res interface{}
 
-			if rterr, ok := err.(*util.RuntimeError); ok && rterr.Type == util.ErrIsIterator {
+	iterator, err := rt.getIterator(vs, is, tid)
 
-				// We got an iterator - all subsequent calls will return values
+	vars := rt.leftInVarName
 
-				iterator = func() (interface{}, error) {
-					return it.Runtime.Eval(vs, is, tid)
-				}
-				err = nil
+	for err == nil {
 
-			} else {
+		if res, err = rt.getIteratorValue(iterator); err == nil {
 
-				// We got a value over which we need to iterate
+			if len(vars) == 1 {
+				err = vs.SetValue(vars[0], res)
 
-				if valList, isList := val.([]interface{}); isList {
+			} else if resList, ok := res.([]interface{}); ok {
 
-					index := -1
-					end := len(valList)
-
-					iterator = func() (interface{}, error) {
-						index++
-						if index >= end {
-							return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
-						}
-						return valList[index], nil
-					}
-
-				} else if valMap, isMap := val.(map[interface{}]interface{}); isMap {
-					var keys []interface{}
-
-					index := -1
-
-					for k := range valMap {
-						keys = append(keys, k)
-					}
-					end := len(keys)
-
-					// Try to sort according to string value
-
-					sortutil.InterfaceStrings(keys)
-
-					iterator = func() (interface{}, error) {
-						index++
-						if index >= end {
-							return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
-						}
-						key := keys[index]
-						return []interface{}{key, valMap[key]}, nil
-					}
-
-				} else {
-
-					// A single value will do exactly one iteration
-
-					index := -1
-
-					iterator = func() (interface{}, error) {
-						index++
-						if index > 0 {
-							return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
-						}
-						return val, nil
-					}
-				}
-			}
-
-			vars := rt.leftInVarName
-
-			for err == nil {
-				var res interface{}
-
-				res, err = iterator()
-
-				if err != nil {
-					if eoi, ok := err.(*util.RuntimeError); ok {
-						if eoi.Type == util.ErrIsIterator {
-							err = nil
-						}
-					}
+				if len(vars) != len(resList) {
+					err = fmt.Errorf("Assigned number of variables is different to "+
+						"number of values (%v variables vs %v values)",
+						len(vars), len(resList))
 				}
 
 				if err == nil {
-
-					if len(vars) == 1 {
-						err = vs.SetValue(vars[0], res)
-
-					} else if resList, ok := res.([]interface{}); ok {
-
-						if len(vars) != len(resList) {
-							err = fmt.Errorf("Assigned number of variables is different to "+
-								"number of values (%v variables vs %v values)",
-								len(vars), len(resList))
-						}
-
+					for i, v := range vars {
 						if err == nil {
-							for i, v := range vars {
-								if err == nil {
-									err = vs.SetValue(v, resList[i])
-								}
-							}
-						}
-
-					} else {
-
-						err = fmt.Errorf("Result for loop variable is not a list (value is %v)", res)
-					}
-
-					if err != nil {
-						return nil, rt.erp.NewRuntimeError(util.ErrRuntimeError,
-							err.Error(), rt.node)
-					}
-
-					// Execute block
-
-					_, err = rt.node.Children[1].Runtime.Eval(vs, is, tid)
-				}
-
-				// Check for continue
-
-				if err != nil {
-					if eoi, ok := err.(*util.RuntimeError); ok {
-						if eoi.Type == util.ErrContinueIteration {
-							err = nil
+							err = vs.SetValue(v, resList[i])
 						}
 					}
 				}
+
+			} else {
+
+				err = fmt.Errorf("Result for loop variable is not a list (value is %v)", res)
 			}
 
-			// Check for end of iteration error
+			if err != nil {
+				return rt.erp.NewRuntimeError(util.ErrRuntimeError,
+					err.Error(), rt.node)
+			}
 
+			// Execute block
+
+			_, err = rt.node.Children[1].Runtime.Eval(vs, is, tid)
+		}
+
+		// Check for continue
+
+		if err != nil {
 			if eoi, ok := err.(*util.RuntimeError); ok {
-				if eoi.Type == util.ErrEndOfIteration {
+				if eoi.Type == util.ErrContinueIteration {
 					err = nil
 				}
 			}
 		}
 	}
 
-	return nil, err
+	// Check for end of iteration error
+
+	if eoi, ok := err.(*util.RuntimeError); ok {
+		if eoi.Type == util.ErrEndOfIteration {
+			err = nil
+		}
+	}
+
+	return err
+}
+
+/*
+getIteratorValue gets the next iterator value.
+*/
+func (rt *loopRuntime) getIteratorValue(iterator func() (interface{}, error)) (interface{}, error) {
+	var err error
+	var res interface{}
+
+	if res, err = iterator(); err != nil {
+		if eoi, ok := err.(*util.RuntimeError); ok {
+			if eoi.Type == util.ErrIsIterator {
+				err = nil
+			}
+		}
+	}
+
+	return res, err
+}
+
+/*
+getIterator create an iterator object.
+*/
+func (rt *loopRuntime) getIterator(vs parser.Scope, is map[string]interface{}, tid uint64) (func() (interface{}, error), error) {
+	var iterator func() (interface{}, error)
+
+	it := rt.node.Children[0].Children[1]
+
+	val, err := it.Runtime.Eval(vs, is, tid)
+
+	// Create an iterator object
+
+	if rterr, ok := err.(*util.RuntimeError); ok && rterr.Type == util.ErrIsIterator {
+
+		// We got an iterator - all subsequent calls will return values
+
+		iterator = func() (interface{}, error) {
+			return it.Runtime.Eval(vs, is, tid)
+		}
+		err = nil
+
+	} else {
+
+		// We got a value over which we need to iterate
+
+		if valList, isList := val.([]interface{}); isList {
+
+			index := -1
+			end := len(valList)
+
+			iterator = func() (interface{}, error) {
+				index++
+				if index >= end {
+					return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
+				}
+				return valList[index], nil
+			}
+
+		} else if valMap, isMap := val.(map[interface{}]interface{}); isMap {
+			var keys []interface{}
+
+			index := -1
+
+			for k := range valMap {
+				keys = append(keys, k)
+			}
+			end := len(keys)
+
+			// Try to sort according to string value
+
+			sortutil.InterfaceStrings(keys)
+
+			iterator = func() (interface{}, error) {
+				index++
+				if index >= end {
+					return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
+				}
+				key := keys[index]
+				return []interface{}{key, valMap[key]}, nil
+			}
+
+		} else {
+
+			// A single value will do exactly one iteration
+
+			index := -1
+
+			iterator = func() (interface{}, error) {
+				index++
+				if index > 0 {
+					return nil, rt.erp.NewRuntimeError(util.ErrEndOfIteration, "", rt.node)
+				}
+				return val, nil
+			}
+		}
+	}
+
+	return iterator, err
 }
 
 // Break statement
@@ -485,63 +512,6 @@ Eval evaluate this runtime component.
 func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint64) (interface{}, error) {
 	var res interface{}
 
-	evalExcept := func(errObj map[interface{}]interface{}, except *parser.ASTNode) bool {
-		ret := false
-
-		if len(except.Children) == 1 {
-
-			// We only have statements - any exception is handled here
-
-			evs := vs.NewChild(scope.NameFromASTNode(except))
-
-			except.Children[0].Runtime.Eval(evs, is, tid)
-
-			ret = true
-
-		} else if len(except.Children) == 2 {
-
-			// We have statements and the error object is available - any exception is handled here
-
-			evs := vs.NewChild(scope.NameFromASTNode(except))
-			evs.SetValue(except.Children[0].Token.Val, errObj)
-
-			except.Children[1].Runtime.Eval(evs, is, tid)
-
-			ret = true
-
-		} else {
-			errorVar := ""
-
-			for i := 0; i < len(except.Children); i++ {
-				child := except.Children[i]
-
-				if !ret && child.Name == parser.NodeSTRING {
-					exceptError, evalErr := child.Runtime.Eval(vs, is, tid)
-
-					// If we fail evaluating the string we panic as otherwise
-					// we would need to generate a new error while trying to handle another error
-					errorutil.AssertOk(evalErr)
-
-					ret = exceptError == fmt.Sprint(errObj["type"])
-
-				} else if ret && child.Name == parser.NodeAS {
-					errorVar = child.Children[0].Token.Val
-
-				} else if ret && child.Name == parser.NodeSTATEMENTS {
-					evs := vs.NewChild(scope.NameFromASTNode(except))
-
-					if errorVar != "" {
-						evs.SetValue(errorVar, errObj)
-					}
-
-					child.Runtime.Eval(evs, is, tid)
-				}
-			}
-		}
-
-		return ret
-	}
-
 	// Make sure the finally block is executed in any case
 
 	if finally := rt.node.Children[len(rt.node.Children)-1]; finally.Name == parser.NodeFINALLY {
@@ -591,7 +561,7 @@ func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint6
 
 			for i := 1; i < len(rt.node.Children); i++ {
 				if child := rt.node.Children[i]; child.Name == parser.NodeEXCEPT {
-					if evalExcept(errObj, child) {
+					if rt.evalExcept(vs, is, tid, errObj, child) {
 						err = nil
 						break
 					}
@@ -601,6 +571,64 @@ func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint6
 	}
 
 	return res, err
+}
+
+func (rt *tryRuntime) evalExcept(vs parser.Scope, is map[string]interface{},
+	tid uint64, errObj map[interface{}]interface{}, except *parser.ASTNode) bool {
+	ret := false
+
+	if len(except.Children) == 1 {
+
+		// We only have statements - any exception is handled here
+
+		evs := vs.NewChild(scope.NameFromASTNode(except))
+
+		except.Children[0].Runtime.Eval(evs, is, tid)
+
+		ret = true
+
+	} else if len(except.Children) == 2 {
+
+		// We have statements and the error object is available - any exception is handled here
+
+		evs := vs.NewChild(scope.NameFromASTNode(except))
+		evs.SetValue(except.Children[0].Token.Val, errObj)
+
+		except.Children[1].Runtime.Eval(evs, is, tid)
+
+		ret = true
+
+	} else {
+		errorVar := ""
+
+		for i := 0; i < len(except.Children); i++ {
+			child := except.Children[i]
+
+			if !ret && child.Name == parser.NodeSTRING {
+				exceptError, evalErr := child.Runtime.Eval(vs, is, tid)
+
+				// If we fail evaluating the string we panic as otherwise
+				// we would need to generate a new error while trying to handle another error
+				errorutil.AssertOk(evalErr)
+
+				ret = exceptError == fmt.Sprint(errObj["type"])
+
+			} else if ret && child.Name == parser.NodeAS {
+				errorVar = child.Children[0].Token.Val
+
+			} else if ret && child.Name == parser.NodeSTATEMENTS {
+				evs := vs.NewChild(scope.NameFromASTNode(except))
+
+				if errorVar != "" {
+					evs.SetValue(errorVar, errObj)
+				}
+
+				child.Runtime.Eval(evs, is, tid)
+			}
+		}
+	}
+
+	return ret
 }
 
 // Mutex Runtime

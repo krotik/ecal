@@ -18,6 +18,7 @@ import (
 	"strings"
 	"testing"
 
+	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/fileutil"
 )
 
@@ -62,28 +63,29 @@ func TestImportLocater(t *testing.T) {
 	expectedError := fmt.Sprintf("Import path is outside of code root: ..%vt",
 		string(os.PathSeparator))
 
-	if res != "" || err == nil || err.Error() != expectedError {
+	if res != "" || err.Error() != expectedError {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
 
 	res, err = fil.Resolve(filepath.Join("..", importTestDir, "x"))
 
-	if res != "" || err == nil || !strings.HasPrefix(err.Error(), "Could not import path") {
+	if res != "" || !strings.HasPrefix(err.Error(), "Could not import path") {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
 
 	res, err = fil.Resolve(filepath.Join("..", importTestDir, "x"))
 
-	if res != "" || err == nil || !strings.HasPrefix(err.Error(), "Could not import path") {
+	if res != "" || !strings.HasPrefix(err.Error(), "Could not import path") {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
 
 	res, err = fil.Resolve(filepath.Join("test1", "myfile.ecal"))
+	errorutil.AssertOk(err)
 
-	if res != codecontent || err != nil {
+	if res != codecontent {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
@@ -93,23 +95,25 @@ func TestImportLocater(t *testing.T) {
 	mil.Files["foo"] = "bar"
 	mil.Files["test"] = "test1"
 
-	res, err = mil.Resolve("xxx")
+	_, err = mil.Resolve("xxx")
 
-	if res != "" || err == nil || err.Error() != "Could not find import path: xxx" {
+	if err.Error() != "Could not find import path: xxx" {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
 
 	res, err = mil.Resolve("foo")
+	errorutil.AssertOk(err)
 
-	if res != "bar" || err != nil {
+	if res != "bar" {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
 
 	res, err = mil.Resolve("test")
+	errorutil.AssertOk(err)
 
-	if res != "test1" || err != nil {
+	if res != "test1" {
 		t.Error("Unexpected result:", res, err)
 		return
 	}

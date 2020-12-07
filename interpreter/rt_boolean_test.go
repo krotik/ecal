@@ -94,8 +94,11 @@ func TestSimpleBoolean(t *testing.T) {
 		t.Error(res, err)
 		return
 	}
+}
 
-	res, err = UnitTestEvalAndAST(
+func TestSimpleBoolean2(t *testing.T) {
+
+	res, err := UnitTestEvalAndAST(
 		`2 < 3`, nil,
 		`
 <
@@ -177,7 +180,11 @@ func TestSimpleBoolean(t *testing.T) {
 		return
 	}
 
-	res, err = UnitTestEvalAndAST(
+}
+
+func TestSimpleBoolean3(t *testing.T) {
+
+	res, err := UnitTestEvalAndAST(
 		`null == null`, nil,
 		`
 ==

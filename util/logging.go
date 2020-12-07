@@ -44,6 +44,9 @@ type LogLevelLogger struct {
 	level  LogLevel
 }
 
+/*
+NewLogLevelLogger wraps a given logger and adds level based filtering functionality.
+*/
 func NewLogLevelLogger(logger Logger, level string) (*LogLevelLogger, error) {
 	llevel := LogLevel(strings.ToLower(level))
 
@@ -234,7 +237,7 @@ type BufferLogger struct {
 }
 
 /*
-NewNullLogger returns a buffer logger instance.
+NewBufferLogger returns a buffer logger instance.
 */
 func NewBufferLogger(buf io.Writer) *BufferLogger {
 	return &BufferLogger{buf}

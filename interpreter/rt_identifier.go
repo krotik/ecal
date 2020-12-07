@@ -137,28 +137,8 @@ func (rt *identifierRuntime) resolveFunction(astring string, vs parser.Scope, is
 	for _, funccall := range node.Children {
 
 		if funccall.Name == parser.NodeFUNCCALL {
-			var funcObj util.ECALFunction
 
-			ok := astring == "log" || astring == "error" || astring == "debug"
-
-			if !ok {
-
-				funcObj, ok = result.(util.ECALFunction)
-
-				if !ok {
-
-					// Check for stdlib function
-
-					funcObj, ok = stdlib.GetStdlibFunc(astring)
-
-					if !ok {
-
-						// Check for inbuild function
-
-						funcObj, ok = InbuildFuncMap[astring]
-					}
-				}
-			}
+			funcObj, ok := rt.resolveFunctionObject(astring, result)
 
 			if ok {
 				var args []interface{}
@@ -175,63 +155,7 @@ func (rt *identifierRuntime) resolveFunction(astring string, vs parser.Scope, is
 				}
 
 				if err == nil {
-
-					if astring == "log" || astring == "error" || astring == "debug" {
-
-						// Convert non-string structures
-
-						for i, a := range args {
-							if _, ok := a.(string); !ok {
-								args[i] = stringutil.ConvertToPrettyString(a)
-							}
-						}
-
-						if astring == "log" {
-							rt.erp.Logger.LogInfo(args...)
-						} else if astring == "error" {
-							rt.erp.Logger.LogError(args...)
-						} else if astring == "debug" {
-							rt.erp.Logger.LogDebug(args...)
-						}
-
-					} else {
-
-						if rt.erp.Debugger != nil {
-							rt.erp.Debugger.VisitStepInState(node, vs, tid)
-						}
-
-						// Execute the function
-
-						result, err = funcObj.Run(rt.instanceID, vs, is, tid, args)
-
-						if rt.erp.Debugger != nil {
-							rt.erp.Debugger.VisitStepOutState(node, vs, tid, err)
-						}
-
-						_, ok1 := err.(*util.RuntimeError)
-						_, ok2 := err.(*util.RuntimeErrorWithDetail)
-
-						if err != nil && !ok1 && !ok2 {
-
-							// Convert into a proper runtime error if necessary
-
-							rerr := rt.erp.NewRuntimeError(util.ErrRuntimeError,
-								err.Error(), node).(*util.RuntimeError)
-
-							if err == util.ErrIsIterator || err == util.ErrEndOfIteration || err == util.ErrContinueIteration {
-								rerr.Type = err
-							}
-
-							err = rerr
-						}
-
-						if tr, ok := err.(util.TraceableRuntimeError); ok {
-
-							// Add tracing information to the error
-
-							tr.AddTrace(rt.node)
-						}
-					}
+					result, err = rt.executeFunction(astring, funcObj, args, vs, is, tid, node)
 				}
 
 			} else {
@@ -241,6 +165,107 @@ func (rt *identifierRuntime) resolveFunction(astring string, vs parser.Scope, is
 			}
 
 			break
+		}
+	}
+
+	return result, err
+}
+
+/*
+resolveFunctionObject will resolve a given string or object into a concrete ECAL function.
+*/
+func (rt *identifierRuntime) resolveFunctionObject(astring string, result interface{}) (util.ECALFunction, bool) {
+	var funcObj util.ECALFunction
+
+	ok := astring == "log" || astring == "error" || astring == "debug"
+
+	if !ok {
+
+		funcObj, ok = result.(util.ECALFunction)
+
+		if !ok {
+
+			// Check for stdlib function
+
+			funcObj, ok = stdlib.GetStdlibFunc(astring)
+
+			if !ok {
+
+				// Check for inbuild function
+
+				funcObj, ok = InbuildFuncMap[astring]
+			}
+		}
+	}
+
+	return funcObj, ok
+}
+
+/*
+executeFunction executes a function call with a given list of arguments and return the result.
+*/
+func (rt *identifierRuntime) executeFunction(astring string, funcObj util.ECALFunction, args []interface{},
+	vs parser.Scope, is map[string]interface{}, tid uint64, node *parser.ASTNode) (interface{}, error) {
+
+	var result interface{}
+	var err error
+
+	if stringutil.IndexOf(astring, []string{"log", "error", "debug"}) != -1 {
+
+		// Convert non-string structures
+
+		for i, a := range args {
+			if _, ok := a.(string); !ok {
+				args[i] = stringutil.ConvertToPrettyString(a)
+			}
+		}
+
+		if astring == "log" {
+			rt.erp.Logger.LogInfo(args...)
+		} else if astring == "error" {
+			rt.erp.Logger.LogError(args...)
+		} else if astring == "debug" {
+			rt.erp.Logger.LogDebug(args...)
+		}
+
+	} else {
+
+		if rt.erp.Debugger != nil {
+			rt.erp.Debugger.VisitStepInState(node, vs, tid)
+		}
+
+		// Execute the function
+
+		result, err = funcObj.Run(rt.instanceID, vs, is, tid, args)
+
+		if rt.erp.Debugger != nil {
+			rt.erp.Debugger.VisitStepOutState(node, vs, tid, err)
+		}
+
+		_, ok1 := err.(*util.RuntimeError)
+		_, ok2 := err.(*util.RuntimeErrorWithDetail)
+
+		if err != nil && !ok1 && !ok2 {
+
+			// Convert into a proper runtime error if necessary
+
+			rerr := rt.erp.NewRuntimeError(util.ErrRuntimeError,
+				err.Error(), node).(*util.RuntimeError)
+
+			if stringutil.IndexOf(err.Error(), []string{util.ErrIsIterator.Error(),
+				util.ErrEndOfIteration.Error(), util.ErrContinueIteration.Error()}) != -1 {
+
+				rerr.Type = err
+			}
+
+			err = rerr
+		}
+
+		if tr, ok := err.(util.TraceableRuntimeError); ok {
+
+			// Add tracing information to the error
+
+			tr.AddTrace(rt.node)
 		}
 	}
 

@@ -122,7 +122,7 @@ func (re *RuntimeError) GetTrace() []*parser.ASTNode {
 }
 
 /*
-GetTrace returns the current stacktrace as a string.
+GetTraceString returns the current stacktrace as a string.
 */
 func (re *RuntimeError) GetTraceString() []string {
 	res := []string{}

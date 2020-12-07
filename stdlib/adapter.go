@@ -61,32 +61,7 @@ func (ea *ECALFunctionAdapter) Run(instanceID string, vs parser.Scope,
 		// Try to convert into correct number types
 
 		if float64Arg, ok := arg.(float64); ok {
-			switch expectedType.Kind() {
-			case reflect.Int:
-				arg = int(float64Arg)
-			case reflect.Int8:
-				arg = int8(float64Arg)
-			case reflect.Int16:
-				arg = int16(float64Arg)
-			case reflect.Int32:
-				arg = int32(float64Arg)
-			case reflect.Int64:
-				arg = int64(float64Arg)
-			case reflect.Uint:
-				arg = uint(float64Arg)
-			case reflect.Uint8:
-				arg = uint8(float64Arg)
-			case reflect.Uint16:
-				arg = uint16(float64Arg)
-			case reflect.Uint32:
-				arg = uint32(float64Arg)
-			case reflect.Uint64:
-				arg = uint64(float64Arg)
-			case reflect.Uintptr:
-				arg = uintptr(float64Arg)
-			case reflect.Float32:
-				arg = float32(float64Arg)
-			}
+			arg = ea.convertNumber(arg, float64Arg, expectedType)
 		}
 
 		givenType := reflect.TypeOf(arg)
@@ -134,16 +109,7 @@ func (ea *ECALFunctionAdapter) Run(instanceID string, vs parser.Scope,
 
 		// Convert result if it is a primitive type
 
-		switch v.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			res = float64(v.Int())
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			res = float64(v.Uint())
-		case reflect.Float32, reflect.Float64:
-			res = v.Float()
-		}
-
-		results = append(results, res)
+		results = append(results, ea.convertResultNumber(res, v))
 	}
 
 	ret = results
@@ -155,6 +121,56 @@ func (ea *ECALFunctionAdapter) Run(instanceID string, vs parser.Scope,
 	}
 
 	return ret, err
+}
+
+/*
+convertNumber converts number arguments into the right type.
+*/
+func (ea *ECALFunctionAdapter) convertNumber(arg interface{}, float64Arg float64, expectedType reflect.Type) interface{} {
+	switch expectedType.Kind() {
+	case reflect.Int:
+		arg = int(float64Arg)
+	case reflect.Int8:
+		arg = int8(float64Arg)
+	case reflect.Int16:
+		arg = int16(float64Arg)
+	case reflect.Int32:
+		arg = int32(float64Arg)
+	case reflect.Int64:
+		arg = int64(float64Arg)
+	case reflect.Uint:
+		arg = uint(float64Arg)
+	case reflect.Uint8:
+		arg = uint8(float64Arg)
+	case reflect.Uint16:
+		arg = uint16(float64Arg)
+	case reflect.Uint32:
+		arg = uint32(float64Arg)
+	case reflect.Uint64:
+		arg = uint64(float64Arg)
+	case reflect.Uintptr:
+		arg = uintptr(float64Arg)
+	case reflect.Float32:
+		arg = float32(float64Arg)
+	}
+
+	return arg
+}
+
+/*
+convertResultNumber converts result numbers into the right type.
+*/
+func (ea *ECALFunctionAdapter) convertResultNumber(res interface{}, v reflect.Value) interface{} {
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		res = float64(v.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		res = float64(v.Uint())
+	case reflect.Float32, reflect.Float64:
+		res = v.Float()
+	}
+
+	return res
 }
 
 /*

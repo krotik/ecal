@@ -62,6 +62,10 @@ type CLIInterpreter struct {
 	LogFile  *string // Logfile (blank for stdout)
 	LogLevel *string // Log level string (Debug, Info, Error)
 
+	// User terminal
+
+	Term termutil.ConsoleLineTerminal
+
 	// Log output
 
 	LogOut io.Writer
@@ -71,7 +75,7 @@ type CLIInterpreter struct {
 NewCLIInterpreter creates a new commandline interpreter for ECAL.
 */
 func NewCLIInterpreter() *CLIInterpreter {
-	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "", "", nil, nil, nil, os.Stdout}
+	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "", "", nil, nil, nil, nil, os.Stdout}
 }
 
 /*
@@ -92,15 +96,15 @@ func (i *CLIInterpreter) ParseArgs() bool {
 	showHelp := flag.Bool("help", false, "Show this help message")
 
 	flag.Usage = func() {
-		fmt.Println()
-		fmt.Println(fmt.Sprintf("Usage of %s run [options] [file]", os.Args[0]))
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
+		fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Usage of %s run [options] [file]", osArgs[0]))
+		fmt.Fprintln(flag.CommandLine.Output())
 		flag.PrintDefaults()
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
 	}
 
-	if len(os.Args) >= 2 {
-		flag.CommandLine.Parse(os.Args[2:])
+	if len(osArgs) >= 2 {
+		flag.CommandLine.Parse(osArgs[2:])
 
 		if cargs := flag.Args(); len(cargs) > 0 {
 			i.EntryFile = flag.Arg(0)
@@ -115,7 +119,7 @@ func (i *CLIInterpreter) ParseArgs() bool {
 }
 
 /*
-Create the runtime provider of this interpreter. This function expects Dir,
+CreateRuntimeProvider creates the runtime provider of this interpreter. This function expects Dir,
 LogFile and LogLevel to be set.
 */
 func (i *CLIInterpreter) CreateRuntimeProvider(name string) error {
@@ -130,6 +134,7 @@ func (i *CLIInterpreter) CreateRuntimeProvider(name string) error {
 
 	if i.LogFile != nil && *i.LogFile != "" {
 		var logWriter io.Writer
+
 		logFileRollover := fileutil.SizeBasedRolloverCondition(1000000) // Each file can be up to a megabyte
 		logWriter, err = fileutil.NewMultiFileBuffer(*i.LogFile, fileutil.ConsecutiveNumberIterator(10), logFileRollover)
 		logger = util.NewBufferLogger(logWriter)
@@ -180,16 +185,31 @@ func (i *CLIInterpreter) LoadInitialFile(tid uint64) error {
 
 		initFile, err = ioutil.ReadFile(i.EntryFile)
 
-		if ast, err = parser.ParseWithRuntime(i.EntryFile, string(initFile), i.RuntimeProvider); err == nil {
-			if err = ast.Runtime.Validate(); err == nil {
-				_, err = ast.Runtime.Eval(i.GlobalVS, make(map[string]interface{}), tid)
-			}
-			defer func() {
-				if i.RuntimeProvider.Debugger != nil {
-					i.RuntimeProvider.Debugger.RecordThreadFinished(tid)
+		if err == nil {
+			if ast, err = parser.ParseWithRuntime(i.EntryFile, string(initFile), i.RuntimeProvider); err == nil {
+				if err = ast.Runtime.Validate(); err == nil {
+					_, err = ast.Runtime.Eval(i.GlobalVS, make(map[string]interface{}), tid)
 				}
-			}()
+				defer func() {
+					if i.RuntimeProvider.Debugger != nil {
+						i.RuntimeProvider.Debugger.RecordThreadFinished(tid)
+					}
+				}()
+			}
 		}
+	}
+
+	return err
+}
+
+/*
+CreateTerm creates a new console terminal for stdout.
+*/
+func (i *CLIInterpreter) CreateTerm() error {
+	var err error
+
+	if i.Term == nil {
+		i.Term, err = termutil.NewConsoleLineTerminal(os.Stdout)
 	}
 
 	return err
@@ -205,7 +225,7 @@ func (i *CLIInterpreter) Interpret(interactive bool) error {
 		return nil
 	}
 
-	clt, err := termutil.NewConsoleLineTerminal(os.Stdout)
+	err := i.CreateTerm()
 
 	if interactive {
 		fmt.Fprintln(i.LogOut, fmt.Sprintf("ECAL %v", config.ProductVersion))
@@ -235,39 +255,33 @@ func (i *CLIInterpreter) Interpret(interactive bool) error {
 
 			if err = i.LoadInitialFile(tid); err == nil {
 
+				// Drop into interactive shell
+
 				if interactive {
 
-					// Drop into interactive shell
+					// Add history functionality without file persistence
+
+					i.Term, err = termutil.AddHistoryMixin(i.Term, "",
+						func(s string) bool {
+							return i.isExitLine(s)
+						})
 
 					if err == nil {
-						isExitLine := func(s string) bool {
-							return s == "exit" || s == "q" || s == "quit" || s == "bye" || s == "\x04"
-						}
 
-						// Add history functionality without file persistence
+						if err = i.Term.StartTerm(); err == nil {
+							var line string
 
-						clt, err = termutil.AddHistoryMixin(clt, "",
-							func(s string) bool {
-								return isExitLine(s)
-							})
+							defer i.Term.StopTerm()
 
-						if err == nil {
+							fmt.Fprintln(i.LogOut, "Type 'q' or 'quit' to exit the shell and '?' to get help")
 
-							if err = clt.StartTerm(); err == nil {
-								var line string
+							line, err = i.Term.NextLine()
+							for err == nil && !i.isExitLine(line) {
+								trimmedLine := strings.TrimSpace(line)
 
-								defer clt.StopTerm()
+								i.HandleInput(i.Term, trimmedLine, tid)
 
-								fmt.Fprintln(i.LogOut, "Type 'q' or 'quit' to exit the shell and '?' to get help")
-
-								line, err = clt.NextLine()
-								for err == nil && !isExitLine(line) {
-									trimmedLine := strings.TrimSpace(line)
-
-									i.HandleInput(clt, trimmedLine, tid)
-
-									line, err = clt.NextLine()
-								}
+								line, err = i.Term.NextLine()
 							}
 						}
 					}
@@ -277,6 +291,13 @@ func (i *CLIInterpreter) Interpret(interactive bool) error {
 	}
 
 	return err
+}
+
+/*
+isExitLine returns if a given input line should exit the interpreter.
+*/
+func (i *CLIInterpreter) isExitLine(s string) bool {
+	return s == "exit" || s == "q" || s == "quit" || s == "bye" || s == "\x04"
 }
 
 /*

@@ -47,6 +47,9 @@ type CLIPacker struct {
 	LogOut io.Writer
 }
 
+var packmarkerend = "####"
+var packmarker = fmt.Sprintf("\n%v%v%v\n", packmarkerend, "ECALSRC", packmarkerend)
+
 /*
 NewCLIPacker creates a new commandline packer.
 */
@@ -63,7 +66,7 @@ func (p *CLIPacker) ParseArgs() bool {
 		return false
 	}
 
-	binname, err := filepath.Abs(os.Args[0])
+	binname, err := filepath.Abs(osArgs[0])
 	errorutil.AssertOk(err)
 
 	wd, _ := os.Getwd()
@@ -74,18 +77,18 @@ func (p *CLIPacker) ParseArgs() bool {
 	showHelp := flag.Bool("help", false, "Show this help message")
 
 	flag.Usage = func() {
-		fmt.Println()
-		fmt.Println(fmt.Sprintf("Usage of %s pack [options] [entry file]", os.Args[0]))
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
+		fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Usage of %s pack [options] [entry file]", os.Args[0]))
+		fmt.Fprintln(flag.CommandLine.Output())
 		flag.PrintDefaults()
-		fmt.Println()
-		fmt.Println("This tool will collect all files in the root directory and " +
+		fmt.Fprintln(flag.CommandLine.Output())
+		fmt.Fprintln(flag.CommandLine.Output(), "This tool will collect all files in the root directory and "+
 			"build a standalone executable from the given source binary and the collected files.")
-		fmt.Println()
+		fmt.Fprintln(flag.CommandLine.Output())
 	}
 
 	if len(os.Args) >= 2 {
-		flag.CommandLine.Parse(os.Args[2:])
+		flag.CommandLine.Parse(osArgs[2:])
 
 		if cargs := flag.Args(); len(cargs) > 0 {
 			p.EntryFile = flag.Arg(0)
@@ -128,10 +131,7 @@ func (p *CLIPacker) Pack() error {
 				fmt.Fprintln(p.LogOut, fmt.Sprintf("Copied %v bytes for interpreter.", bytes))
 				var bytes int
 
-				end := "####"
-				marker := fmt.Sprintf("\n%v%v%v\n", end, "ECALSRC", end)
-
-				if bytes, err = dest.WriteString(marker); err == nil {
+				if bytes, err = dest.WriteString(packmarker); err == nil {
 					var data []byte
 					fmt.Fprintln(p.LogOut, fmt.Sprintf("Writing marker %v bytes for source archive.", bytes))
 
@@ -147,11 +147,12 @@ func (p *CLIPacker) Pack() error {
 
 								// Add files to the archive
 
-								if err = p.packFiles(w, *p.Dir, ""); err == nil {
-									err = w.Close()
-
+								defer func() {
+									w.Close()
 									os.Chmod(*p.TargetBinary, 0775) // Try a chmod but don't care about any errors
-								}
+								}()
+
+								err = p.packFiles(w, *p.Dir, "")
 							}
 						}
 					}
@@ -193,6 +194,16 @@ func (p *CLIPacker) packFiles(w *zip.Writer, filePath string, zipPath string) er
 	return err
 }
 
+var ( // Internal reading buffers
+	b1 = 4096
+	b2 = len(packmarker) + 11
+)
+
+/*
+handleError is the error handling function for runtime errors in packed binaries.
+*/
+var handleError func(error) = errorutil.AssertOk
+
 /*
 RunPackedBinary runs ECAL code is it has been attached to the currently running binary.
 Exits if attached ECAL code has been executed.
@@ -201,11 +212,8 @@ func RunPackedBinary() {
 	var retCode = 0
 	var result bool
 
-	exename, err := filepath.Abs(os.Args[0])
+	exename, err := filepath.Abs(osArgs[0])
 	errorutil.AssertOk(err)
-
-	end := "####"
-	marker := fmt.Sprintf("\n%v%v%v\n", end, "ECALSRC", end)
 
 	if ok, _ := fileutil.PathExists(exename); !ok {
 
@@ -224,8 +232,8 @@ func RunPackedBinary() {
 			defer f.Close()
 
 			found := false
-			buf := make([]byte, 4096)
-			buf2 := make([]byte, len(marker)+11)
+			buf := make([]byte, b1)
+			buf2 := make([]byte, b2)
 
 			// Look for the marker which marks the beginning of the attached zip file
 
@@ -240,12 +248,12 @@ func RunPackedBinary() {
 					if i2, err := f.Read(buf2); err == nil || err == io.EOF {
 						candidateString := string(append(buf, buf2...))
 
-						// Now determine the position if the zip file
+						// Now determine the position of the zip file
 
-						markerIndex := strings.Index(candidateString, marker)
+						markerIndex := strings.Index(candidateString, packmarker)
 
 						if found = markerIndex >= 0; found {
-							start := int64(markerIndex + len(marker))
+							start := int64(markerIndex + len(packmarker))
 							for unicode.IsSpace(rune(candidateString[start])) || unicode.IsControl(rune(candidateString[start])) {
 								start++ // Skip final control characters \n or \r\n
 							}
@@ -271,9 +279,8 @@ func RunPackedBinary() {
 
 					ret, err = runInterpreter(io.NewSectionReader(f, pos, zipLen), zipLen)
 
-					if retNum, ok := ret.(float64); ok {
-						retCode = int(retNum)
-					}
+					retNum, _ := ret.(float64)
+					retCode = int(retNum)
 
 					result = err == nil
 				}
@@ -281,10 +288,10 @@ func RunPackedBinary() {
 		}
 	}
 
-	errorutil.AssertOk(err)
+	handleError(err)
 
 	if result {
-		os.Exit(retCode)
+		osExit(retCode)
 	}
 }
 
@@ -299,19 +306,16 @@ func runInterpreter(reader io.ReaderAt, size int64) (interface{}, error) {
 	if err == nil {
 
 		for _, f := range r.File {
+			if err == nil {
+				if rc, err = f.Open(); err == nil {
+					var data []byte
 
-			if rc, err = f.Open(); err == nil {
-				var data []byte
+					defer rc.Close()
 
-				defer rc.Close()
-
-				if data, err = ioutil.ReadAll(rc); err == nil {
-					il.Files[f.Name] = string(data)
+					if data, err = ioutil.ReadAll(rc); err == nil {
+						il.Files[f.Name] = string(data)
+					}
 				}
-			}
-
-			if err != nil {
-				break
 			}
 		}
 	}
@@ -319,7 +323,7 @@ func runInterpreter(reader io.ReaderAt, size int64) (interface{}, error) {
 	if err == nil {
 		var ast *parser.ASTNode
 
-		erp := interpreter.NewECALRuntimeProvider(os.Args[0], il, util.NewStdOutLogger())
+		erp := interpreter.NewECALRuntimeProvider(osArgs[0], il, util.NewStdOutLogger())
 
 		if ast, err = parser.ParseWithRuntime(os.Args[0], il.Files[".ecalsrc-entry"], erp); err == nil {
 			if err = ast.Runtime.Validate(); err == nil {
@@ -334,10 +338,10 @@ func runInterpreter(reader io.ReaderAt, size int64) (interface{}, error) {
 				res, err = ast.Runtime.Eval(vs, make(map[string]interface{}), erp.NewThreadID())
 
 				if err != nil {
-					fmt.Fprintln(os.Stderr, err.Error())
+					fmt.Fprintln(osStderr, err.Error())
 
 					if terr, ok := err.(util.TraceableRuntimeError); ok {
-						fmt.Fprintln(os.Stderr, fmt.Sprint("  ", strings.Join(terr.GetTraceString(), fmt.Sprint(fmt.Sprintln(), "  "))))
+						fmt.Fprintln(osStderr, fmt.Sprint("  ", strings.Join(terr.GetTraceString(), fmt.Sprint(fmt.Sprintln(), "  "))))
 					}
 
 					err = nil

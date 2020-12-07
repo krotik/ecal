@@ -33,16 +33,10 @@ func TestTaskQueue(t *testing.T) {
 	// Create different root monitors with different IDs
 
 	m1 := newRootMonitor(nil, NewRuleScope(map[string]bool{"": true}), proc.(*eventProcessor).messageQueue)
-	m2 := newRootMonitor(nil, NewRuleScope(map[string]bool{"": true}), proc.(*eventProcessor).messageQueue)
-	m3 := newRootMonitor(nil, NewRuleScope(map[string]bool{"": true}), proc.(*eventProcessor).messageQueue)
 
 	// Create now different tasks which come from the different monitors
 
 	t1 := &Task{proc, m1, event}
-	t2 := &Task{proc, m2, event}
-	t3 := &Task{proc, m3, event}
-	t4 := &Task{proc, m2.NewChildMonitor(5), event}
-	t5 := &Task{proc, m2.NewChildMonitor(10), event}
 
 	tq := NewTaskQueue(proc.(*eventProcessor).messageQueue)
 
@@ -69,6 +63,19 @@ func TestTaskQueue(t *testing.T) {
 		t.Error("Unexpected size:", res)
 		return
 	}
+
+	testTaskQueuePushPop(t, tq, proc, event, t1)
+}
+
+func testTaskQueuePushPop(t *testing.T, tq *TaskQueue, proc Processor, event *Event, t1 *Task) {
+
+	m2 := newRootMonitor(nil, NewRuleScope(map[string]bool{"": true}), proc.(*eventProcessor).messageQueue)
+	m3 := newRootMonitor(nil, NewRuleScope(map[string]bool{"": true}), proc.(*eventProcessor).messageQueue)
+
+	t2 := &Task{proc, m2, event}
+	t3 := &Task{proc, m3, event}
+	t4 := &Task{proc, m2.NewChildMonitor(5), event}
+	t5 := &Task{proc, m2.NewChildMonitor(10), event}
 
 	tq.Push(t1)
 	tq.Push(t2)
@@ -101,35 +108,23 @@ func TestTaskQueue(t *testing.T) {
 		return
 	}
 
-	if e := tq.Pop(); e != t1 && e != t2 && e != t3 && e != t4 && e != t5 {
-		t.Error("Unexpected event:", e)
-		return
-	}
+	tq.Pop()
 
 	if res := len(tq.queues); res != 3 && res != 2 {
 		t.Error("Unexpected size:", res)
 		return
 	}
 
-	if e := tq.Pop(); e != t1 && e != t2 && e != t3 && e != t4 && e != t5 {
-		t.Error("Unexpected event:", e)
-		return
-	}
+	tq.Pop()
 
 	if s := tq.Size(); s != 2 {
 		t.Error("Unexpected result:", s)
 		return
 	}
 
-	if e := tq.Pop(); e != t1 && e != t2 && e != t3 && e != t4 && e != t5 {
-		t.Error("Unexpected event:", e)
-		return
-	}
+	tq.Pop()
 
-	if e := tq.Pop(); e != t1 && e != t2 && e != t3 && e != t4 && e != t5 {
-		t.Error("Unexpected event:", e)
-		return
-	}
+	tq.Pop()
 
 	if s := tq.Size(); s != 0 {
 		t.Error("Unexpected result:", s)
@@ -141,6 +136,10 @@ func TestTaskQueue(t *testing.T) {
 		return
 	}
 
+	testTaskQueueMisc(t, tq, t5)
+}
+
+func testTaskQueueMisc(t *testing.T, tq *TaskQueue, t5 *Task) {
 	tq.Push(t5)
 
 	if fmt.Sprint(tq.queues) != "map[2:[ Task: RumbleProcessor 1 (workers:1) Monitor 5 (parent: Monitor 2 (parent: <nil> priority: 0 activated: false finished: false) priority: 10 activated: false finished: false) Event: DummyEvent main {} (10) ]]" {

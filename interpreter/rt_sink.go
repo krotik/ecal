@@ -73,155 +73,72 @@ func (rt *sinkRuntime) Validate() error {
 Eval evaluate this runtime component.
 */
 func (rt *sinkRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint64) (interface{}, error) {
-	var kindMatch, scopeMatch, suppresses []string
-	var stateMatch map[string]interface{}
-	var priority int
-	var statements *parser.ASTNode
-
 	_, err := rt.baseRuntime.Eval(vs, is, tid)
 
 	if err == nil {
-		// Create default scope
+		var rule *engine.Rule
+		var statements *parser.ASTNode
 
-		scopeMatch = []string{}
-
-		// Get the name of the sink
-
-		name := rt.node.Children[0].Token.Val
-
-		// Create helper function
-
-		makeStringList := func(child *parser.ASTNode) ([]string, error) {
-			var ret []string
-
-			val, err := child.Runtime.Eval(vs, is, tid)
-
-			if err == nil {
-				for _, v := range val.([]interface{}) {
-					ret = append(ret, fmt.Sprint(v))
-				}
-			}
-
-			return ret, err
-		}
-
-		// Collect values from children
-
-		for _, child := range rt.node.Children[1:] {
-
-			switch child.Name {
-
-			case parser.NodeKINDMATCH:
-				kindMatch, err = makeStringList(child)
-				break
-
-			case parser.NodeSCOPEMATCH:
-				scopeMatch, err = makeStringList(child)
-				break
-
-			case parser.NodeSTATEMATCH:
-				var val interface{}
-				stateMatch = make(map[string]interface{})
-
-				if val, err = child.Runtime.Eval(vs, is, tid); err == nil {
-					for k, v := range val.(map[interface{}]interface{}) {
-						stateMatch[fmt.Sprint(k)] = v
-					}
-				}
-				break
-
-			case parser.NodePRIORITY:
-				var val interface{}
-
-				if val, err = child.Runtime.Eval(vs, is, tid); err == nil {
-					priority = int(math.Floor(val.(float64)))
-				}
-				break
-
-			case parser.NodeSUPPRESSES:
-				suppresses, err = makeStringList(child)
-				break
-
-			case parser.NodeSTATEMENTS:
-				statements = child
-				break
-			}
-
-			if err != nil {
-				break
-			}
-		}
+		rule, statements, err = rt.createRule(vs, is, tid)
 
 		if err == nil && statements != nil {
-			var desc string
-
-			sinkName := fmt.Sprint(name)
 
 			if len(rt.node.Meta) > 0 &&
 				(rt.node.Meta[0].Type() == parser.MetaDataPreComment ||
 					rt.node.Meta[0].Type() == parser.MetaDataPostComment) {
-				desc = strings.TrimSpace(rt.node.Meta[0].Value())
+				rule.Desc = strings.TrimSpace(rt.node.Meta[0].Value())
 			}
 
-			rule := &engine.Rule{
-				Name:            sinkName,   // Name
-				Desc:            desc,       // Description
-				KindMatch:       kindMatch,  // Kind match
-				ScopeMatch:      scopeMatch, // Match on event cascade scope
-				StateMatch:      stateMatch, // No state match
-				Priority:        priority,   // Priority of the rule
-				SuppressionList: suppresses, // List of suppressed rules by this rule
-				Action: func(p engine.Processor, m engine.Monitor, e *engine.Event, tid uint64) error { // Action of the rule
+			rule.Action = func(p engine.Processor, m engine.Monitor, e *engine.Event, tid uint64) error { // Action of the rule
 
-					// Create a new root variable scope
+				// Create a new root variable scope
 
-					sinkVS := scope.NewScope(fmt.Sprintf("sink: %v", sinkName))
+				sinkVS := scope.NewScope(fmt.Sprintf("sink: %v", rule.Name))
 
-					// Create a new instance state with the monitor - everything called
-					// by the rule will have access to the current monitor.
+				// Create a new instance state with the monitor - everything called
+				// by the rule will have access to the current monitor.
 
-					sinkIs := map[string]interface{}{
-						"monitor": m,
-					}
+				sinkIs := map[string]interface{}{
+					"monitor": m,
+				}
 
-					err = sinkVS.SetValue("event", map[interface{}]interface{}{
-						"name":  e.Name(),
-						"kind":  strings.Join(e.Kind(), engine.RuleKindSeparator),
-						"state": e.State(),
-					})
+				err = sinkVS.SetValue("event", map[interface{}]interface{}{
+					"name":  e.Name(),
+					"kind":  strings.Join(e.Kind(), engine.RuleKindSeparator),
+					"state": e.State(),
+				})
 
-					if err == nil {
-						scope.SetParentOfScope(sinkVS, vs)
+				if err == nil {
+					scope.SetParentOfScope(sinkVS, vs)
 
-						if _, err = statements.Runtime.Eval(sinkVS, sinkIs, tid); err != nil {
+					if _, err = statements.Runtime.Eval(sinkVS, sinkIs, tid); err != nil {
 
-							if sre, ok := err.(*util.RuntimeErrorWithDetail); ok {
-								sre.Environment = sinkVS
+						if sre, ok := err.(*util.RuntimeErrorWithDetail); ok {
+							sre.Environment = sinkVS
 
-							} else {
-								var data interface{}
-								rerr := rt.erp.NewRuntimeError(util.ErrSink, err.Error(), rt.node).(*util.RuntimeError)
+						} else {
+							var data interface{}
+							rerr := rt.erp.NewRuntimeError(util.ErrSink, err.Error(), rt.node).(*util.RuntimeError)
 
-								if e, ok := err.(*util.RuntimeError); ok {
-									rerr = e
-								} else if r, ok := err.(*returnValue); ok {
-									rerr = r.RuntimeError
-									data = r.returnValue
-								}
+							if e, ok := err.(*util.RuntimeError); ok {
+								rerr = e
+							} else if r, ok := err.(*returnValue); ok {
+								rerr = r.RuntimeError
+								data = r.returnValue
+							}
 
-								// Provide additional information for unexpected errors
+							// Provide additional information for unexpected errors
 
-								err = &util.RuntimeErrorWithDetail{
-									RuntimeError: rerr,
-									Environment:  sinkVS,
-									Data:         data,
-								}
+							err = &util.RuntimeErrorWithDetail{
+								RuntimeError: rerr,
+								Environment:  sinkVS,
+								Data:         data,
 							}
 						}
 					}
+				}
 
-					return err
-				},
+				return err
 			}
 
 			if err = rt.erp.Processor.AddRule(rule); err != nil {
@@ -231,6 +148,102 @@ func (rt *sinkRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint
 	}
 
 	return nil, err
+}
+
+/*
+createRule creates a rule for the ECA engine.
+*/
+func (rt *sinkRuntime) createRule(vs parser.Scope, is map[string]interface{},
+	tid uint64) (*engine.Rule, *parser.ASTNode, error) {
+
+	var kindMatch, scopeMatch, suppresses []string
+	var stateMatch map[string]interface{}
+	var priority int
+	var statements *parser.ASTNode
+	var err error
+
+	// Create default scope
+
+	scopeMatch = []string{}
+
+	// Get sink name
+
+	sinkName := fmt.Sprint(rt.node.Children[0].Token.Val)
+
+	// Collect values from children
+
+	for _, child := range rt.node.Children[1:] {
+
+		switch child.Name {
+
+		case parser.NodeKINDMATCH:
+			kindMatch, err = rt.makeStringList(child, vs, is, tid)
+			break
+
+		case parser.NodeSCOPEMATCH:
+			scopeMatch, err = rt.makeStringList(child, vs, is, tid)
+			break
+
+		case parser.NodeSTATEMATCH:
+			var val interface{}
+			stateMatch = make(map[string]interface{})
+
+			if val, err = child.Runtime.Eval(vs, is, tid); err == nil {
+				for k, v := range val.(map[interface{}]interface{}) {
+					stateMatch[fmt.Sprint(k)] = v
+				}
+			}
+			break
+
+		case parser.NodePRIORITY:
+			var val interface{}
+
+			if val, err = child.Runtime.Eval(vs, is, tid); err == nil {
+				priority = int(math.Floor(val.(float64)))
+			}
+			break
+
+		case parser.NodeSUPPRESSES:
+			suppresses, err = rt.makeStringList(child, vs, is, tid)
+			break
+
+		case parser.NodeSTATEMENTS:
+			statements = child
+			break
+		}
+
+		if err != nil {
+			break
+		}
+	}
+
+	return &engine.Rule{
+		Name:            sinkName,   // Name
+		KindMatch:       kindMatch,  // Kind match
+		ScopeMatch:      scopeMatch, // Match on event cascade scope
+		StateMatch:      stateMatch, // No state match
+		Priority:        priority,   // Priority of the rule
+		SuppressionList: suppresses, // List of suppressed rules by this rule
+	}, statements, err
+}
+
+/*
+makeStringList evaluates a given child node into a list of strings.
+*/
+func (rt *sinkRuntime) makeStringList(child *parser.ASTNode, vs parser.Scope,
+	is map[string]interface{}, tid uint64) ([]string, error) {
+
+	var ret []string
+
+	val, err := child.Runtime.Eval(vs, is, tid)
+
+	if err == nil {
+		for _, v := range val.([]interface{}) {
+			ret = append(ret, fmt.Sprint(v))
+		}
+	}
+
+	return ret, err
 }
 
 // Sink child nodes

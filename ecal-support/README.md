@@ -16,7 +16,7 @@ The extension supports the following features:
 
 ## Install the extension
 
-The extention can be installed using a precompiled VSIX file which can be downloaded from here:
+The extension can be installed using a precompiled VSIX file which can be downloaded from here:
 
 https://devt.de/krotik/ecal/releases
 

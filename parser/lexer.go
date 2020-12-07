@@ -21,8 +21,15 @@ import (
 	"unicode/utf8"
 )
 
+/*
+NamePattern is the pattern for valid names.
+*/
 var NamePattern = regexp.MustCompile("^[A-Za-z][A-Za-z0-9]*$")
-var NumberPattern = regexp.MustCompile("^[0-9].*$")
+
+/*
+numberPattern is a hint pattern for numbers.
+*/
+var numberPattern = regexp.MustCompile("^[0-9].*$")
 
 /*
 LexToken represents a token which is returned by the lexer.
@@ -588,7 +595,7 @@ func lexToken(l *lexer) lexFunc {
 
 	// Check for number
 
-	if NumberPattern.MatchString(keywordCandidate) {
+	if numberPattern.MatchString(keywordCandidate) {
 		_, err := strconv.ParseFloat(keywordCandidate, 64)
 
 		if err == nil {

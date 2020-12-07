@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"devt.de/krotik/common/errorutil"
@@ -113,8 +114,12 @@ func (i *CLIDebugInterpreter) Interpret() error {
 
 			debugServer := &debugTelnetServer{*i.DebugServerAddr, "ECALDebugServer: ",
 				nil, true, *i.EchoDebugServer, i, i.RuntimeProvider.Logger}
-			go debugServer.Run()
-			time.Sleep(500 * time.Millisecond) // Too lazy to do proper signalling
+
+			wg := &sync.WaitGroup{}
+			wg.Add(1)
+			go debugServer.Run(wg)
+			wg.Wait()
+
 			defer func() {
 				if debugServer.listener != nil {
 					debugServer.listen = false
@@ -211,12 +216,16 @@ type debugTelnetServer struct {
 /*
 Run runs the debug server.
 */
-func (s *debugTelnetServer) Run() {
+func (s *debugTelnetServer) Run(wg *sync.WaitGroup) {
 	tcpaddr, err := net.ResolveTCPAddr("tcp", s.address)
 
 	if err == nil {
 
-		if s.listener, err = net.ListenTCP("tcp", tcpaddr); err == nil {
+		s.listener, err = net.ListenTCP("tcp", tcpaddr)
+
+		if err == nil {
+
+			wg.Done()
 
 			s.logger.LogInfo(s.logPrefix,
 				"Running Debug Server on ", tcpaddr.String())
@@ -225,7 +234,6 @@ func (s *debugTelnetServer) Run() {
 				var conn net.Conn
 
 				if conn, err = s.listener.Accept(); err == nil {
-
 					go s.HandleConnection(conn)
 
 				} else if s.listen {
@@ -238,6 +246,7 @@ func (s *debugTelnetServer) Run() {
 
 	if s.listen && err != nil {
 		s.logger.LogError(s.logPrefix, "Could not start debug server - ", err)
+		wg.Done()
 	}
 }
 

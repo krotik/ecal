@@ -152,122 +152,15 @@ genStdlib contains all generated stdlib constructs.
 
 				// Write constants
 
-				outbuf.WriteString(fmt.Sprintf(`/*
-%vConstMap contains the mapping of stdlib %v constants.
-*/
-var %vConstMap = map[interface{}]interface{}{
-`, pkgName, pkgName, pkgName))
-
-				for _, name := range scope.Names() {
-
-					if !containsSymbol(pkgSymbols, name) {
-						continue
-					}
-
-					switch obj := scope.Lookup(name).(type) {
-					case *types.Const:
-
-						if unicode.IsUpper([]rune(name)[0]) {
-
-							line := fmt.Sprintf(`	"%v": %v.%v,
-`, name, pkgName, obj.Name())
-
-							if basicType, ok := obj.Type().(*types.Basic); ok {
-
-								// Convert number constants so they can be used in calculations
-
-								switch basicType.Kind() {
-								case types.Int,
-									types.Int8,
-									types.Int16,
-									types.Int32,
-									types.Int64,
-									types.Uint,
-									types.Uint8,
-									types.Uint16,
-									types.Uint32,
-									types.Uint64,
-									types.Uintptr,
-									types.Float32,
-									types.UntypedInt,
-									types.UntypedFloat:
-
-									line = fmt.Sprintf(`	"%v": float64(%v.%v),
-`, name, pkgName, obj.Name())
-								}
-							}
-
-							outbuf.WriteString(line)
-						}
-					}
-				}
-
-				outbuf.WriteString("}\n\n")
+				writeConstants(&outbuf, pkgName, pkgSymbols, scope)
 
 				// Write function documentation
 
-				outbuf.WriteString(fmt.Sprintf(`/*
-%vFuncDocMap contains the documentation of stdlib %v functions.
-*/
-var %vFuncDocMap = map[interface{}]interface{}{
-`, pkgName, pkgName, pkgName))
-
-				if pkgDoc, ok := pkgDocs[pkgName]; ok {
-
-					for _, name := range scope.Names() {
-
-						if !containsSymbol(pkgSymbols, name) {
-							continue
-						}
-
-						for _, f := range pkgDoc.Funcs {
-							if f.Name == name {
-								outbuf.WriteString(
-									fmt.Sprintf(`	"%v": %#v,
-`, name, f.Doc))
-							}
-						}
-					}
-
-				} else {
-
-					for _, name := range pkgSymbols {
-						switch scope.Lookup(name).(type) {
-						case *types.Func:
-							outbuf.WriteString(
-								fmt.Sprintf(`	"%v": "Function: %v",
-`, name, name))
-						}
-					}
-				}
-
-				outbuf.WriteString("}\n\n")
+				writeFuncDoc(&outbuf, pkgName, pkgDocs, pkgSymbols, scope)
 
 				// Write functions
 
-				outbuf.WriteString(fmt.Sprintf(`/*
-%vFuncMap contains the mapping of stdlib %v functions.
-*/
-var %vFuncMap = map[interface{}]interface{}{
-`, pkgName, pkgName, pkgName))
-
-				for _, name := range scope.Names() {
-
-					if !containsSymbol(pkgSymbols, name) {
-						continue
-					}
-
-					switch obj := scope.Lookup(name).(type) {
-					case *types.Func:
-						if unicode.IsUpper([]rune(name)[0]) {
-							outbuf.WriteString(
-								fmt.Sprintf(`	%#v: &ECALFunctionAdapter{reflect.ValueOf(%v), fmt.Sprint(%vFuncDocMap[%#v])},
-`, name, obj.FullName(), pkgName, name))
-						}
-					}
-				}
-
-				outbuf.WriteString("}\n\n")
+				writeFuncs(&outbuf, pkgName, pkgSymbols, scope)
 			}
 		}
 	}
@@ -289,6 +182,137 @@ var (
 	fset = token.NewFileSet()
 	ctx  = &build.Default
 )
+
+/*
+writeConstants writes out all stdlib constant definitions.
+*/
+func writeConstants(outbuf *bytes.Buffer, pkgName string, pkgSymbols []string, scope *types.Scope) {
+
+	outbuf.WriteString(fmt.Sprintf(`/*
+%vConstMap contains the mapping of stdlib %v constants.
+*/
+var %vConstMap = map[interface{}]interface{}{
+`, pkgName, pkgName, pkgName))
+
+	for _, name := range scope.Names() {
+
+		if !containsSymbol(pkgSymbols, name) {
+			continue
+		}
+
+		switch obj := scope.Lookup(name).(type) {
+		case *types.Const:
+
+			if unicode.IsUpper([]rune(name)[0]) {
+
+				line := fmt.Sprintf(`	"%v": %v.%v,
+`, name, pkgName, obj.Name())
+
+				if basicType, ok := obj.Type().(*types.Basic); ok {
+
+					// Convert number constants so they can be used in calculations
+
+					switch basicType.Kind() {
+					case types.Int,
+						types.Int8,
+						types.Int16,
+						types.Int32,
+						types.Int64,
+						types.Uint,
+						types.Uint8,
+						types.Uint16,
+						types.Uint32,
+						types.Uint64,
+						types.Uintptr,
+						types.Float32,
+						types.UntypedInt,
+						types.UntypedFloat:
+
+						line = fmt.Sprintf(`	"%v": float64(%v.%v),
+`, name, pkgName, obj.Name())
+					}
+				}
+
+				outbuf.WriteString(line)
+			}
+		}
+	}
+
+	outbuf.WriteString("}\n\n")
+}
+
+/*
+writeFuncDoc writes out all stdlib function documentation.
+*/
+func writeFuncDoc(outbuf *bytes.Buffer, pkgName string, pkgDocs map[string]*doc.Package,
+	pkgSymbols []string, scope *types.Scope) {
+
+	outbuf.WriteString(fmt.Sprintf(`/*
+%vFuncDocMap contains the documentation of stdlib %v functions.
+*/
+var %vFuncDocMap = map[interface{}]interface{}{
+`, pkgName, pkgName, pkgName))
+
+	if pkgDoc, ok := pkgDocs[pkgName]; ok {
+
+		for _, name := range scope.Names() {
+
+			if !containsSymbol(pkgSymbols, name) {
+				continue
+			}
+
+			for _, f := range pkgDoc.Funcs {
+				if f.Name == name {
+					outbuf.WriteString(
+						fmt.Sprintf(`	"%v": %#v,
+`, name, f.Doc))
+				}
+			}
+		}
+
+	} else {
+
+		for _, name := range pkgSymbols {
+			switch scope.Lookup(name).(type) {
+			case *types.Func:
+				outbuf.WriteString(
+					fmt.Sprintf(`	"%v": "Function: %v",
+`, name, name))
+			}
+		}
+	}
+
+	outbuf.WriteString("}\n\n")
+}
+
+/*
+writeFuncs writes out all stdlib function definitions.
+*/
+func writeFuncs(outbuf *bytes.Buffer, pkgName string, pkgSymbols []string, scope *types.Scope) {
+	outbuf.WriteString(fmt.Sprintf(`/*
+%vFuncMap contains the mapping of stdlib %v functions.
+*/
+var %vFuncMap = map[interface{}]interface{}{
+`, pkgName, pkgName, pkgName))
+
+	for _, name := range scope.Names() {
+
+		if !containsSymbol(pkgSymbols, name) {
+			continue
+		}
+
+		switch obj := scope.Lookup(name).(type) {
+		case *types.Func:
+			if unicode.IsUpper([]rune(name)[0]) {
+				outbuf.WriteString(
+					fmt.Sprintf(`	%#v: &ECALFunctionAdapter{reflect.ValueOf(%v), fmt.Sprint(%vFuncDocMap[%#v])},
+`, name, obj.FullName(), pkgName, name))
+			}
+		}
+	}
+
+	outbuf.WriteString("}\n\n")
+}
 
 /*
 getPackageDocs returns the source code documentation of as given Go package.

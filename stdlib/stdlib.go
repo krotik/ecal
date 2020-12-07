@@ -145,7 +145,7 @@ func GetStdlibFunc(name string) (util.ECALFunction, bool) {
 GetPkgDocString returns the docstring of a stdlib package.
 */
 func GetPkgDocString(name string) (string, bool) {
-	var res = ""
+	var res string
 	s, ok := genStdlib[fmt.Sprintf("%v-synopsis", name)]
 	if ok {
 		res = fmt.Sprint(s)

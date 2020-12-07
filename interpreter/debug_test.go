@@ -33,18 +33,12 @@ func TestSimpleDebugging(t *testing.T) {
 
 	testDebugger = NewECALDebugger(nil)
 
-	if _, err = testDebugger.HandleInput("break ECALEvalTest:3"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
-	if _, err = testDebugger.HandleInput("break ECALEvalTest:4"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
-	if _, err = testDebugger.HandleInput("disablebreak ECALEvalTest:4"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("break ECALEvalTest:3")
+	errorutil.AssertOk(err)
+	_, err = testDebugger.HandleInput("break ECALEvalTest:4")
+	errorutil.AssertOk(err)
+	_, err = testDebugger.HandleInput("disablebreak ECALEvalTest:4")
+	errorutil.AssertOk(err)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -145,10 +139,8 @@ log("test3")
 
 	// Continue until the end
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid))
+	errorutil.AssertOk(err)
 
 	wg.Wait()
 
@@ -160,10 +152,8 @@ test3`[1:] {
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("rmbreak ECALEvalTest:4"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("rmbreak ECALEvalTest:4")
+	errorutil.AssertOk(err)
 
 	out, err = testDebugger.HandleInput(fmt.Sprintf("status"))
 
@@ -184,15 +174,11 @@ test3`[1:] {
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("break ECALEvalTest:4"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("break ECALEvalTest:4")
+	errorutil.AssertOk(err)
 
-	if _, err = testDebugger.HandleInput("rmbreak ECALEvalTest"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("rmbreak ECALEvalTest")
+	errorutil.AssertOk(err)
 
 	out, err = testDebugger.HandleInput(fmt.Sprintf("status"))
 
@@ -552,17 +538,17 @@ log("test4")
 func waitForThreadSuspension(t *testing.T) uint64 {
 	var tid uint64
 
-	for i := 0; i < 100; i += 1 {
+	for i := 0; i < 100; i++ {
 		state, err := testDebugger.HandleInput("status")
 		errorutil.AssertOk(err)
 
 		threads := state.(map[string]interface{})["threads"].(map[string]map[string]interface{})
 		if len(threads) > 0 {
-			for threadId, status := range threads {
+			for threadID, status := range threads {
 
 				if r, ok := status["threadRunning"]; ok && !r.(bool) {
-					threadIdNum, _ := strconv.ParseInt(threadId, 10, 0)
-					tid = uint64(threadIdNum)
+					threadIDNum, _ := strconv.ParseInt(threadID, 10, 0)
+					tid = uint64(threadIDNum)
 					return tid
 				}
 			}
@@ -577,7 +563,7 @@ func waitForThreadSuspension(t *testing.T) uint64 {
 func waitForAllThreadSuspension(t *testing.T) uint64 {
 	var tid uint64
 
-	for i := 0; i < 100; i += 1 {
+	for i := 0; i < 100; i++ {
 		state, err := testDebugger.HandleInput("status")
 		errorutil.AssertOk(err)
 
@@ -640,15 +626,11 @@ d(d())
 log("finish")
 `
 
-	if _, err = testDebugger.HandleInput("break ECALEvalTest:10"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("break ECALEvalTest:10")
+	errorutil.AssertOk(err)
 
-	if _, err = testDebugger.HandleInput("breakonstart true"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("breakonstart true")
+	errorutil.AssertOk(err)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -681,10 +663,8 @@ log("finish")
 		return
 	}
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v resume", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v resume", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -713,10 +693,8 @@ log("finish")
 
 	// Step in without a function
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -746,10 +724,8 @@ log("finish")
 
 	// Normal step over
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepover", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepover", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -779,10 +755,8 @@ log("finish")
 
 	// Normal step in
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -810,10 +784,8 @@ log("finish")
 
 	// Normal step out
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -843,12 +815,15 @@ log("finish")
 
 	// Step in and step out - we should end up on the same line as before
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepin", tid))
+	errorutil.AssertOk(err)
 
-	tid = waitForThreadSuspension(t)
+	testStepDebugging2(t, testDebugger, wg)
+}
+
+func testStepDebugging2(t *testing.T, testDebugger util.ECALDebugger, wg *sync.WaitGroup) {
+
+	tid := waitForThreadSuspension(t)
 
 	if state := getDebuggerState(tid, t); state != `{
   "breakpoints": {
@@ -872,10 +847,9 @@ log("finish")
 		return
 	}
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid))
+	errorutil.AssertOk(err)
+
 	tid = waitForThreadSuspension(t)
 
 	if state := getDebuggerState(tid, t); state != `{
@@ -904,10 +878,9 @@ log("finish")
 
 	// Normal step out
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepout", tid))
+	errorutil.AssertOk(err)
+
 	tid = waitForThreadSuspension(t)
 
 	if state := getDebuggerState(tid, t); state != `{
@@ -935,15 +908,11 @@ log("finish")
 
 	// Set a new breakpoint
 
-	if _, err = testDebugger.HandleInput("break ECALEvalTest:28"); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput("break ECALEvalTest:28")
+	errorutil.AssertOk(err)
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid))
+	errorutil.AssertOk(err)
 
 	tid = waitForThreadSuspension(t)
 
@@ -974,10 +943,9 @@ log("finish")
 
 	// Normal step over
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v stepover", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v stepover", tid))
+	errorutil.AssertOk(err)
+
 	tid = waitForThreadSuspension(t)
 
 	if state := getDebuggerState(tid, t); state != `{
@@ -1038,10 +1006,8 @@ log("finish")
 
 	// Continue until the end
 
-	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid)); err != nil {
-		t.Error("Unexpected result:", err)
-		return
-	}
+	_, err = testDebugger.HandleInput(fmt.Sprintf("cont %v Resume", tid))
+	errorutil.AssertOk(err)
 
 	wg.Wait()
 
@@ -1463,38 +1429,32 @@ func TestDebuggingErrorInput(t *testing.T) {
 
 	testDebugger = NewECALDebugger(vs)
 
-	if _, err = testDebugger.HandleInput("uuu"); err == nil ||
-		err.Error() != `Unknown command: uuu` {
+	if _, err = testDebugger.HandleInput("uuu"); err.Error() != `Unknown command: uuu` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("break"); err == nil ||
-		err.Error() != `Need a break target (<source>:<line>) as first parameter` {
+	if _, err = testDebugger.HandleInput("break"); err.Error() != `Need a break target (<source>:<line>) as first parameter` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("break foo"); err == nil ||
-		err.Error() != `Invalid break target - should be <source>:<line>` {
+	if _, err = testDebugger.HandleInput("break foo"); err.Error() != `Invalid break target - should be <source>:<line>` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("rmbreak"); err == nil ||
-		err.Error() != `Need a break target (<source>[:<line>]) as first parameter` {
+	if _, err = testDebugger.HandleInput("rmbreak"); err.Error() != `Need a break target (<source>[:<line>]) as first parameter` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("disablebreak"); err == nil ||
-		err.Error() != `Need a break target (<source>:<line>) as first parameter` {
+	if _, err = testDebugger.HandleInput("disablebreak"); err.Error() != `Need a break target (<source>:<line>) as first parameter` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("disablebreak foo"); err == nil ||
-		err.Error() != `Invalid break target - should be <source>:<line>` {
+	if _, err = testDebugger.HandleInput("disablebreak foo"); err.Error() != `Invalid break target - should be <source>:<line>` {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -1547,64 +1507,68 @@ log("test3")
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("cont foo"); err == nil ||
-		err.Error() != `Need a thread ID and a command Resume, StepIn, StepOver or StepOut` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo foo", tid)); err.Error() != `No such value foo` {
+		t.Error("Unexpected result:", err)
+		return
+	}
+}
+
+func TestDebuggingErrorInput2(t *testing.T) {
+	var err error
+
+	tid := 1
+
+	defer func() {
+		testDebugger = nil
+	}()
+
+	vs := scope.NewScope(scope.GlobalScope)
+
+	testDebugger = NewECALDebugger(vs)
+
+	if _, err = testDebugger.HandleInput("cont foo"); err.Error() != `Need a thread ID and a command Resume, StepIn, StepOver or StepOut` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("cont foo bar"); err == nil ||
-		err.Error() != `Parameter 1 should be a number` {
+	if _, err = testDebugger.HandleInput("cont foo bar"); err.Error() != `Parameter 1 should be a number` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("cont 99 bar"); err == nil ||
-		err.Error() != `Invalid command bar - must be resume, stepin, stepover or stepout` {
+	if _, err = testDebugger.HandleInput("cont 99 bar"); err.Error() != `Invalid command bar - must be resume, stepin, stepover or stepout` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput("describe"); err == nil ||
-		err.Error() != `Need a thread ID` {
+	if _, err = testDebugger.HandleInput("describe"); err.Error() != `Need a thread ID` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo", tid)); err == nil ||
-		err.Error() != `Need a thread ID, a variable name and a destination variable name` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo", tid)); err.Error() != `Need a thread ID, a variable name and a destination variable name` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v _foo foo", tid)); err == nil ||
-		err.Error() != `Variable names may only contain [a-zA-Z] and [a-zA-Z0-9] from the second character` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v _foo foo", tid)); err.Error() != `Variable names may only contain [a-zA-Z] and [a-zA-Z0-9] from the second character` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo foo", tid)); err == nil ||
-		err.Error() != `No such value foo` {
-		t.Error("Unexpected result:", err)
-		return
-	}
-
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("inject %v", tid)); err == nil ||
-		err.Error() != `Need a thread ID, a variable name and an expression` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("inject %v", tid)); err.Error() != `Need a thread ID, a variable name and an expression` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
 	testDebugger.(*ecalDebugger).globalScope = nil
 
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo foo", tid)); err == nil ||
-		err.Error() != `Cannot access global scope` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("extract %v foo foo", tid)); err.Error() != `Cannot access global scope` {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err = testDebugger.HandleInput(fmt.Sprintf("inject %v foo foo", tid)); err == nil ||
-		err.Error() != `Cannot access global scope` {
+	if _, err = testDebugger.HandleInput(fmt.Sprintf("inject %v foo foo", tid)); err.Error() != `Cannot access global scope` {
 		t.Error("Unexpected result:", err)
 		return
 	}

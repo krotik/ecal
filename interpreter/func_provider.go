@@ -824,7 +824,7 @@ func (ct *setCronTrigger) Run(instanceID string, vs parser.Scope, is map[string]
 			tick := 0
 
 			erp.Cron.RegisterSpec(cs, func() {
-				tick += 1
+				tick++
 				now := erp.Cron.NowFunc()
 				event := engine.NewEvent(eventname, eventkind, map[interface{}]interface{}{
 					"time":      now,
@@ -894,7 +894,7 @@ func (pt *setPulseTrigger) Run(instanceID string, vs parser.Scope, is map[string
 				for {
 					time.Sleep(time.Duration(micros) * time.Microsecond)
 
-					tick += 1
+					tick++
 					now := time.Now()
 					micros := now.UnixNano() / int64(time.Microsecond)
 					event := engine.NewEvent(eventname, eventkind, map[interface{}]interface{}{

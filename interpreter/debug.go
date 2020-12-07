@@ -90,7 +90,7 @@ func newInterrogationState(node *parser.ASTNode, vs parser.Scope) *interrogation
 }
 
 /*
-NewDebugger returns a new debugger object.
+NewECALDebugger returns a new debugger object.
 */
 func NewECALDebugger(globalVS parser.Scope) util.ECALDebugger {
 	return &ecalDebugger{
@@ -135,7 +135,7 @@ func (ed *ecalDebugger) HandleInput(input string) (interface{}, error) {
 /*
 StopThreads will continue all suspended threads and set them to be killed.
 Returns true if a waiting thread was resumed. Can wait for threads to end
-by ensuring that for at least d time no state change occured.
+by ensuring that for at least d time no state change occurred.
 */
 func (ed *ecalDebugger) StopThreads(d time.Duration) bool {
 	var ret = false
@@ -445,17 +445,17 @@ func (ed *ecalDebugger) RemoveBreakPoint(source string, line int) {
 ExtractValue copies a value from a suspended thread into the
 global variable scope.
 */
-func (ed *ecalDebugger) ExtractValue(threadId uint64, varName string, destVarName string) error {
+func (ed *ecalDebugger) ExtractValue(threadID uint64, varName string, destVarName string) error {
 	if ed.globalScope == nil {
 		return fmt.Errorf("Cannot access global scope")
 	}
 
-	err := fmt.Errorf("Cannot find suspended thread %v", threadId)
+	err := fmt.Errorf("Cannot find suspended thread %v", threadID)
 
 	ed.lock.Lock()
 	defer ed.lock.Unlock()
 
-	is, ok := ed.interrogationStates[threadId]
+	is, ok := ed.interrogationStates[threadID]
 
 	if ok && !is.running {
 		var val interface{}
@@ -475,17 +475,17 @@ func (ed *ecalDebugger) ExtractValue(threadId uint64, varName string, destVarNam
 InjectValue copies a value from an expression (using the global variable scope) into
 a suspended thread.
 */
-func (ed *ecalDebugger) InjectValue(threadId uint64, varName string, expression string) error {
+func (ed *ecalDebugger) InjectValue(threadID uint64, varName string, expression string) error {
 	if ed.globalScope == nil {
 		return fmt.Errorf("Cannot access global scope")
 	}
 
-	err := fmt.Errorf("Cannot find suspended thread %v", threadId)
+	err := fmt.Errorf("Cannot find suspended thread %v", threadID)
 
 	ed.lock.Lock()
 	defer ed.lock.Unlock()
 
-	is, ok := ed.interrogationStates[threadId]
+	is, ok := ed.interrogationStates[threadID]
 
 	if ok && !is.running {
 		var ast *parser.ASTNode
@@ -515,11 +515,11 @@ func (ed *ecalDebugger) InjectValue(threadId uint64, varName string, expression 
 /*
 Continue will continue a suspended thread.
 */
-func (ed *ecalDebugger) Continue(threadId uint64, contType util.ContType) {
+func (ed *ecalDebugger) Continue(threadID uint64, contType util.ContType) {
 	ed.lock.RLock()
 	defer ed.lock.RUnlock()
 
-	if is, ok := ed.interrogationStates[threadId]; ok && !is.running {
+	if is, ok := ed.interrogationStates[threadID]; ok && !is.running {
 
 		switch contType {
 		case util.Resume:
@@ -530,7 +530,7 @@ func (ed *ecalDebugger) Continue(threadId uint64, contType util.ContType) {
 			is.cmd = StepOver
 		case util.StepOut:
 			is.cmd = StepOut
-			stack := ed.callStacks[threadId]
+			stack := ed.callStacks[threadID]
 			is.stepOutStack = stack[:len(stack)-1]
 		}
 
@@ -581,17 +581,17 @@ func (ed *ecalDebugger) Status() interface{} {
 }
 
 /*
-Describe decribes a thread currently observed by the debugger.
+Describe describes a thread currently observed by the debugger.
 */
-func (ed *ecalDebugger) Describe(threadId uint64) interface{} {
+func (ed *ecalDebugger) Describe(threadID uint64) interface{} {
 	ed.lock.RLock()
 	defer ed.lock.RUnlock()
 
 	var res map[string]interface{}
 
-	threadCallStack, ok1 := ed.callStacks[threadId]
+	threadCallStack, ok1 := ed.callStacks[threadID]
 
-	if is, ok2 := ed.interrogationStates[threadId]; ok1 && ok2 {
+	if is, ok2 := ed.interrogationStates[threadID]; ok1 && ok2 {
 		callStackNode := make([]map[string]interface{}, 0)
 
 		for _, sn := range threadCallStack {
@@ -603,8 +603,8 @@ func (ed *ecalDebugger) Describe(threadId uint64) interface{} {
 			"error":                     is.err,
 			"callStack":                 ed.prettyPrintCallStack(threadCallStack),
 			"callStackNode":             callStackNode,
-			"callStackVsSnapshot":       ed.callStackVsSnapshots[threadId],
-			"callStackVsSnapshotGlobal": ed.callStackGlobalVsSnapshots[threadId],
+			"callStackVsSnapshot":       ed.callStackVsSnapshots[threadID],
+			"callStackVsSnapshotGlobal": ed.callStackGlobalVsSnapshots[threadID],
 		}
 
 		if !is.running {
@@ -672,7 +672,7 @@ func (ed *ecalDebugger) MergeMaps(maps ...map[string]interface{}) map[string]int
 }
 
 /*
-Describe decribes a thread currently observed by the debugger.
+Describe describes a thread currently observed by the debugger.
 */
 func (ed *ecalDebugger) prettyPrintCallStack(threadCallStack []*parser.ASTNode) []string {
 	cs := []string{}

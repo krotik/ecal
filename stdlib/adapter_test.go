@@ -21,14 +21,14 @@ import (
 	"devt.de/krotik/ecal/scope"
 )
 
-func TestECALFunctionAdapter(t *testing.T) {
+func TestECALFunctionAdapterSimple(t *testing.T) {
 
 	res, err := runAdapterTest(
 		reflect.ValueOf(strconv.Atoi),
 		[]interface{}{"1"},
 	)
 
-	if err != nil || res != float64(1) {
+	if errorutil.AssertOk(err); res != float64(1) {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -38,7 +38,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{"123", float64(0), float64(0)},
 	)
 
-	if err != nil || res != float64(123) {
+	if errorutil.AssertOk(err); res != float64(123) {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -48,7 +48,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{"123.123", float64(0)},
 	)
 
-	if err != nil || res != float64(123.123) {
+	if errorutil.AssertOk(err); res != float64(123.123) {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -58,7 +58,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{"foo %v", "bar"},
 	)
 
-	if err != nil || res != "foo bar" {
+	if errorutil.AssertOk(err); res != "foo bar" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -67,8 +67,9 @@ func TestECALFunctionAdapter(t *testing.T) {
 		reflect.ValueOf(math.Float32bits),
 		[]interface{}{float64(11)},
 	)
+	errorutil.AssertOk(err)
 
-	if r := fmt.Sprintf("%X", uint32(res.(float64))); err != nil || r != fmt.Sprintf("%X", math.Float32bits(11)) {
+	if r := fmt.Sprintf("%X", uint32(res.(float64))); r != fmt.Sprintf("%X", math.Float32bits(11)) {
 		t.Error("Unexpected result: ", r, err)
 		return
 	}
@@ -77,8 +78,9 @@ func TestECALFunctionAdapter(t *testing.T) {
 		reflect.ValueOf(math.Float32frombits),
 		[]interface{}{float64(math.Float32bits(11))},
 	)
+	errorutil.AssertOk(err)
 
-	if r := fmt.Sprintf("%v", res.(float64)); err != nil || r != "11" {
+	if r := fmt.Sprintf("%v", res.(float64)); r != "11" {
 		t.Error("Unexpected result: ", r, err)
 		return
 	}
@@ -87,18 +89,23 @@ func TestECALFunctionAdapter(t *testing.T) {
 		reflect.ValueOf(math.Float32frombits),
 		[]interface{}{math.Float32bits(11)}, // Giving the correct type also works
 	)
+	errorutil.AssertOk(err)
 
-	if r := fmt.Sprintf("%v", res.(float64)); err != nil || r != "11" {
+	if r := fmt.Sprintf("%v", res.(float64)); r != "11" {
 		t.Error("Unexpected result: ", r, err)
 		return
 	}
+}
 
-	res, err = runAdapterTest(
+func TestECALFunctionAdapterSimple2(t *testing.T) {
+
+	res, err := runAdapterTest(
 		reflect.ValueOf(math.Float64bits),
 		[]interface{}{float64(11)},
 	)
+	errorutil.AssertOk(err)
 
-	if r := fmt.Sprintf("%X", uint64(res.(float64))); err != nil || r != fmt.Sprintf("%X", math.Float64bits(11)) {
+	if r := fmt.Sprintf("%X", uint64(res.(float64))); r != fmt.Sprintf("%X", math.Float64bits(11)) {
 		t.Error("Unexpected result: ", r, err)
 		return
 	}
@@ -107,8 +114,9 @@ func TestECALFunctionAdapter(t *testing.T) {
 		reflect.ValueOf(math.Float64frombits),
 		[]interface{}{float64(math.Float64bits(11))},
 	)
+	errorutil.AssertOk(err)
 
-	if r := fmt.Sprintf("%v", res.(float64)); err != nil || r != "11" {
+	if r := fmt.Sprintf("%v", res.(float64)); r != "11" {
 		t.Error("Unexpected result: ", r, err)
 		return
 	}
@@ -118,7 +126,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -128,7 +136,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -138,7 +146,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -148,7 +156,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -158,7 +166,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -168,7 +176,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -178,7 +186,7 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -188,14 +196,17 @@ func TestECALFunctionAdapter(t *testing.T) {
 		[]interface{}{float64(1)},
 	)
 
-	if err != nil || res != "1" {
+	if errorutil.AssertOk(err); res != "1" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
+}
+
+func TestECALFunctionAdapterErrors(t *testing.T) {
 
 	// Test Error cases
 
-	res, err = runAdapterTest(
+	res, err := runAdapterTest(
 		reflect.ValueOf(strconv.ParseFloat),
 		[]interface{}{"123.123", 0, 0},
 	)

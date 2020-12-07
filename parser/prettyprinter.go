@@ -155,33 +155,14 @@ PrettyPrint produces pretty printed code from a given AST.
 func PrettyPrint(ast *ASTNode) (string, error) {
 	var visit func(ast *ASTNode, level int) (string, error)
 
-	ppMetaData := func(ast *ASTNode, ppString string) string {
-		ret := ppString
-
-		// Add meta data
-
-		if len(ast.Meta) > 0 {
-			for _, meta := range ast.Meta {
-				if meta.Type() == MetaDataPreComment {
-					ret = fmt.Sprintf("/*%v*/ %v", meta.Value(), ret)
-				} else if meta.Type() == MetaDataPostComment {
-					ret = fmt.Sprintf("%v #%v", ret, meta.Value())
-				}
-			}
-		}
-
-		return ret
-	}
-
 	visit = func(ast *ASTNode, level int) (string, error) {
 		var buf bytes.Buffer
-		var numChildren int
 
 		if ast == nil {
 			return "", fmt.Errorf("Nil pointer in AST at level: %v", level)
 		}
 
-		numChildren = len(ast.Children)
+		numChildren := len(ast.Children)
 
 		tempKey := ast.Name
 		tempParam := make(map[string]string)
@@ -209,171 +190,12 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 			tempKey += fmt.Sprint("_", len(tempParam))
 		}
 
-		// Handle special cases - children in tempParam have been resolved
-
-		if ast.Name == NodeSTATEMENTS {
-
-			// For statements just concat all children
-
-			for i := 0; i < numChildren; i++ {
-				buf.WriteString(stringutil.GenerateRollingString(" ", level*4))
-				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-				buf.WriteString("\n")
-			}
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeSINK {
-
-			buf.WriteString("sink ")
-			buf.WriteString(tempParam["c1"])
-			buf.WriteString("\n")
-
-			for i := 1; i < len(ast.Children)-1; i++ {
-				buf.WriteString("  ")
-				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-				buf.WriteString("\n")
-			}
-
-			buf.WriteString("{\n")
-			buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
-			buf.WriteString("}\n")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeFUNCCALL {
-
-			// For statements just concat all children
-
-			for i := 0; i < numChildren; i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-				if i < numChildren-1 {
-					buf.WriteString(", ")
-				}
-			}
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeIDENTIFIER {
-
-			buf.WriteString(ast.Token.Val)
-
-			for i := 0; i < numChildren; i++ {
-				if ast.Children[i].Name == NodeIDENTIFIER {
-					buf.WriteString(".")
-					buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-				} else if ast.Children[i].Name == NodeFUNCCALL {
-					buf.WriteString("(")
-					buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-					buf.WriteString(")")
-				} else if ast.Children[i].Name == NodeCOMPACCESS {
-					buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-				}
-			}
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeLIST {
-
-			buf.WriteString("[")
-			i := 1
-			for ; i < numChildren; i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i)])
-				buf.WriteString(", ")
-			}
-			buf.WriteString(tempParam[fmt.Sprint("c", i)])
-			buf.WriteString("]")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeMAP {
-
-			buf.WriteString("{")
-			i := 1
-			for ; i < numChildren; i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i)])
-				buf.WriteString(", ")
-			}
-			buf.WriteString(tempParam[fmt.Sprint("c", i)])
-			buf.WriteString("}")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodePARAMS {
-
-			buf.WriteString("(")
-			i := 1
-			for ; i < numChildren; i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i)])
-				buf.WriteString(", ")
-			}
-			buf.WriteString(tempParam[fmt.Sprint("c", i)])
-			buf.WriteString(")")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeIF {
-
-			writeGUARD := func(child int) {
-				buf.WriteString(tempParam[fmt.Sprint("c", child)])
-				buf.WriteString(" {\n")
-				buf.WriteString(tempParam[fmt.Sprint("c", child+1)])
-				buf.WriteString("}")
-			}
-
-			buf.WriteString("if ")
-
-			writeGUARD(1)
-
-			for i := 0; i < len(ast.Children); i += 2 {
-				if i+2 == len(ast.Children) && ast.Children[i].Children[0].Name == NodeTRUE {
-					buf.WriteString(" else {\n")
-					buf.WriteString(tempParam[fmt.Sprint("c", i+2)])
-					buf.WriteString("}")
-				} else if i > 0 {
-					buf.WriteString(" elif ")
-					writeGUARD(i + 1)
-				}
-			}
-
-			buf.WriteString("\n")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeTRY {
-
-			buf.WriteString("try {\n")
-			buf.WriteString(tempParam[fmt.Sprint("c1")])
-
-			buf.WriteString("}")
-
-			for i := 1; i < len(ast.Children); i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-			}
-
-			buf.WriteString("\n")
-
-			return ppMetaData(ast, buf.String()), nil
-
-		} else if ast.Name == NodeEXCEPT {
-			buf.WriteString(" except ")
-
-			for i := 0; i < len(ast.Children)-1; i++ {
-				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
-
-				if ast.Children[i+1].Name != NodeAS && i < len(ast.Children)-2 {
-					buf.WriteString(",")
-				}
-				buf.WriteString(" ")
-			}
-
-			buf.WriteString("{\n")
-
-			buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
-
-			buf.WriteString("}")
-
-			return ppMetaData(ast, buf.String()), nil
+		if res, ok := ppSpecialDefs(ast, level, tempParam, &buf); ok {
+			return res, nil
+		} else if res, ok := ppSpecialBlocks(ast, level, tempParam, &buf); ok {
+			return res, nil
+		} else if res, ok := ppSpecialStatements(ast, level, tempParam, &buf); ok {
+			return res, nil
 		}
 
 		if ast.Token != nil {
@@ -399,4 +221,218 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 	}
 
 	return visit(ast, 0)
+}
+
+/*
+ppMetaData pretty prints meta data.
+*/
+func ppMetaData(ast *ASTNode, ppString string) string {
+	ret := ppString
+
+	// Add meta data
+
+	if len(ast.Meta) > 0 {
+		for _, meta := range ast.Meta {
+			if meta.Type() == MetaDataPreComment {
+				ret = fmt.Sprintf("/*%v*/ %v", meta.Value(), ret)
+			} else if meta.Type() == MetaDataPostComment {
+				ret = fmt.Sprintf("%v #%v", ret, meta.Value())
+			}
+		}
+	}
+
+	return ret
+}
+
+/*
+ppSpecialDefs pretty prints special cases.
+*/
+func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+	numChildren := len(ast.Children)
+
+	if ast.Name == NodeFUNCCALL {
+
+		for i := 0; i < numChildren; i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+			if i < numChildren-1 {
+				buf.WriteString(", ")
+			}
+		}
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeSINK {
+
+		buf.WriteString("sink ")
+		buf.WriteString(tempParam["c1"])
+		buf.WriteString("\n")
+
+		for i := 1; i < len(ast.Children)-1; i++ {
+			buf.WriteString("  ")
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+			buf.WriteString("\n")
+		}
+
+		buf.WriteString("{\n")
+		buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
+		buf.WriteString("}\n")
+
+		return ppMetaData(ast, buf.String()), true
+	}
+
+	return "", false
+}
+
+/*
+ppSpecialBlocks pretty prints special cases.
+*/
+func ppSpecialBlocks(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+	numChildren := len(ast.Children)
+
+	// Handle special cases - children in tempParam have been resolved
+
+	if stringutil.IndexOf(ast.Name, []string{NodeSTATEMENTS}) != -1 {
+
+		// For statements just concat all children
+
+		for i := 0; i < numChildren; i++ {
+			buf.WriteString(stringutil.GenerateRollingString(" ", level*4))
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+			buf.WriteString("\n")
+		}
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeLIST {
+
+		buf.WriteString("[")
+		i := 1
+		for ; i < numChildren; i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i)])
+			buf.WriteString(", ")
+		}
+		buf.WriteString(tempParam[fmt.Sprint("c", i)])
+		buf.WriteString("]")
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeMAP {
+
+		buf.WriteString("{")
+		i := 1
+		for ; i < numChildren; i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i)])
+			buf.WriteString(", ")
+		}
+		buf.WriteString(tempParam[fmt.Sprint("c", i)])
+		buf.WriteString("}")
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeTRY {
+
+		buf.WriteString("try {\n")
+		buf.WriteString(tempParam[fmt.Sprint("c1")])
+
+		buf.WriteString("}")
+
+		for i := 1; i < len(ast.Children); i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+		}
+
+		buf.WriteString("\n")
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeEXCEPT {
+
+		buf.WriteString(" except ")
+
+		for i := 0; i < len(ast.Children)-1; i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+
+			if ast.Children[i+1].Name != NodeAS && i < len(ast.Children)-2 {
+				buf.WriteString(",")
+			}
+			buf.WriteString(" ")
+		}
+
+		buf.WriteString("{\n")
+		buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
+		buf.WriteString("}")
+
+		return ppMetaData(ast, buf.String()), true
+	}
+
+	return "", false
+}
+
+/*
+ppSpecialStatements pretty prints special cases.
+*/
+func ppSpecialStatements(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+	numChildren := len(ast.Children)
+
+	if ast.Name == NodeIDENTIFIER {
+
+		buf.WriteString(ast.Token.Val)
+
+		for i := 0; i < numChildren; i++ {
+			if ast.Children[i].Name == NodeIDENTIFIER {
+				buf.WriteString(".")
+				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+			} else if ast.Children[i].Name == NodeFUNCCALL {
+				buf.WriteString("(")
+				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+				buf.WriteString(")")
+			} else if ast.Children[i].Name == NodeCOMPACCESS {
+				buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+			}
+		}
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodePARAMS {
+
+		buf.WriteString("(")
+		i := 1
+		for ; i < numChildren; i++ {
+			buf.WriteString(tempParam[fmt.Sprint("c", i)])
+			buf.WriteString(", ")
+		}
+		buf.WriteString(tempParam[fmt.Sprint("c", i)])
+		buf.WriteString(")")
+
+		return ppMetaData(ast, buf.String()), true
+
+	} else if ast.Name == NodeIF {
+
+		writeGUARD := func(child int) {
+			buf.WriteString(tempParam[fmt.Sprint("c", child)])
+			buf.WriteString(" {\n")
+			buf.WriteString(tempParam[fmt.Sprint("c", child+1)])
+			buf.WriteString("}")
+		}
+
+		buf.WriteString("if ")
+
+		writeGUARD(1)
+
+		for i := 0; i < len(ast.Children); i += 2 {
+			if i+2 == len(ast.Children) && ast.Children[i].Children[0].Name == NodeTRUE {
+				buf.WriteString(" else {\n")
+				buf.WriteString(tempParam[fmt.Sprint("c", i+2)])
+				buf.WriteString("}")
+			} else if i > 0 {
+				buf.WriteString(" elif ")
+				writeGUARD(i + 1)
+			}
+		}
+
+		buf.WriteString("\n")
+
+		return ppMetaData(ast, buf.String()), true
+	}
+
+	return "", false
 }
