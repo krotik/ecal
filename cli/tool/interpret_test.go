@@ -52,7 +52,6 @@ func newTestInterpreter() *CLIInterpreter {
 func newTestInterpreterWithConfig() *CLIInterpreter {
 	tin := newTestInterpreter()
 
-	// Setup
 	if res, _ := fileutil.PathExists(testDir); res {
 		os.RemoveAll(testDir)
 	}
@@ -67,8 +66,6 @@ func newTestInterpreterWithConfig() *CLIInterpreter {
 	tin.Dir = &l
 
 	tin.CustomWelcomeMessage = "123"
-
-	// Teardown
 
 	return tin
 }
@@ -142,6 +139,41 @@ func TestInterpretBasicFunctions(t *testing.T) {
 
 	if tin.EntryFile != "myfile" {
 		t.Error("Unexpected entryfile:", tin.EntryFile)
+		return
+	}
+
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError) // Reset CLI parsing
+
+	osArgs = []string{"foo", "bar"}
+
+	// Try to load non-existing plugins (success case is tested in stdlib)
+
+	tin = newTestInterpreterWithConfig()
+	defer tearDown()
+
+	l1 := ""
+	tin.LogFile = &l1
+	l2 := ""
+	tin.LogLevel = &l2
+
+	ioutil.WriteFile(filepath.Join(testDir, ".ecal.json"), []byte(`{
+  "stdlibPlugins" : [{
+    "package" : "mypkg",
+    "name" : "myfunc",
+    "path" : "./myfunc.so",
+    "symbol" : "ECALmyfunc"
+  }]
+}`), 0666)
+
+	err := tin.Interpret(true)
+
+	if err == nil || err.Error() != "Could not load plugins defined in .ecal.json" {
+		t.Error("Unexpected result:", err.Error())
+		return
+	}
+
+	if !strings.Contains(testLogOut.String(), "Error loading plugins") {
+		t.Error("Unexpected result:", testLogOut.String())
 		return
 	}
 }

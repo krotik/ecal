@@ -17,9 +17,9 @@ ECAL is an ECA (Event Condition Action) language for concurrent event processing
 
 Features
 --------
-- Simple intuitive syntax
-- Minimalistic base language (by default only writing to a log is supported)
-- Language can be easily extended either by auto generating bridge adapters to Go functions or by adding custom function into the stdlib
+- Simple intuitive syntax.
+- Minimalistic base language (by default only writing to a log is supported).
+- Language can be easily extended either by auto generating bridge adapters to Go functions or by adding custom function into the standard library (stdlib).
 - External events can be easily pushed into the interpreter and scripts written in ECAL can react to these events.
 - Simple but powerful concurrent event-based processing supporting priorities and scoping for control flow.
 - Handling event rules can match on event state and rules can suppress each other.
@@ -126,6 +126,33 @@ All errors are collected in the returned monitor.
 ```
 monitor.RootMonitor().AllErrors()
 ```
+
+### Using Go plugins in ECAL
+
+ECAL supports to extend the standard library (stdlib) functions via [Go plugins](https://golang.org/pkg/plugin/). The intention of this feature is to allow easy expansion of the standard library even with platform dependent code.
+
+Go plugins come with quite a few extra [requirements and drawbacks](https://www.reddit.com/r/golang/comments/b6h8qq/is_anyone_actually_using_go_plugins/) and should be considered carefully. One major requirement is that `CGO_ENABLED` must be enabled because plugins use the libc dynamic linker. Using [CGO](https://blog.golang.org/cgo) means that cross-platform compilation is difficult as the compilation requires platform specific system libraries.
+
+ECAL stdlib functions defined in plugins must conform to the following interface:
+```
+/*
+ECALPluginFunction models a callable function in ECAL which can be imported via a plugin.
+*/
+type ECALPluginFunction interface {
+
+	/*
+		Run executes this function with a given list of arguments.
+	*/
+	Run(args []interface{}) (interface{}, error)
+
+	/*
+	   DocString returns a descriptive text about this function.
+	*/
+	DocString() string
+}
+```
+
+There is a plugin example in the directory `examples/plugin`. The example assumes that the interpreter binary has been compiled with `CGO_ENABLED` which is the default when building the interpreter via the Makefile but not when using the pre-compiled binaries except the Linux binary. The plugin .so file can be compiled with `buildplugin.sh` (the Go compiler must have the same version as the one which compiled the interpreter binary). Running the example with `run.sh` will make the ECAL interpreter load the compiled plugin before executing the ECAL code. The example demonstrates normal and error output. The plugins to load can be defined in a `.ecal.json` file in the interpreter's root directory.
 
 ### Further Reading:
 

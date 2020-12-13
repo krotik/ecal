@@ -54,6 +54,22 @@ type ECALFunction interface {
 }
 
 /*
+ECALPluginFunction models a callable function in ECAL which can be imported via a plugin.
+*/
+type ECALPluginFunction interface {
+
+	/*
+		Run executes this function with a given list of arguments.
+	*/
+	Run(args []interface{}) (interface{}, error)
+
+	/*
+	   DocString returns a descriptive text about this function.
+	*/
+	DocString() string
+}
+
+/*
 Logger is required external object to which the interpreter releases its log messages.
 */
 type Logger interface {

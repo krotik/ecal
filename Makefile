@@ -1,6 +1,9 @@
 export NAME=ecal
 export TAG=`git describe --abbrev=0 --tags`
-export CGO_ENABLED=0
+
+# CGO_ENABLED is enabled here to support Go plugins
+# if Go plugins are not used this can be disabled.
+export CGO_ENABLED=1
 export GOOS=linux
 
 all: build
@@ -29,16 +32,16 @@ build: clean mod generate fmt vet
 	go build -ldflags "-s -w" -o $(NAME) cli/*.go
 
 build-mac: clean mod generate fmt vet
-	GOOS=darwin GOARCH=amd64 go build -o $(NAME).mac cli/*.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $(NAME).mac cli/*.go
 
 build-win: clean mod generate fmt vet
-	GOOS=windows GOARCH=amd64 go build -o $(NAME).exe cli/*.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(NAME).exe cli/*.go
 
 build-arm7: clean mod generate fmt vet
-	GOOS=linux GOARCH=arm GOARM=7 go build -o $(NAME).arm7 cli/*.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -o $(NAME).arm7 cli/*.go
 
 build-arm8: clean mod generate fmt vet
-	GOOS=linux GOARCH=arm64 go build -o $(NAME).arm8 cli/*.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o $(NAME).arm8 cli/*.go
 
 dist: build build-win build-mac build-arm7 build-arm8
 	rm -fR dist

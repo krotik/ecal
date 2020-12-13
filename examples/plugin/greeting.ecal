@@ -1,0 +1,9 @@
+a := "Hans"
+res := mypkg.myfunc(a)
+log(res)
+
+try {
+  mypkg.myfunc()
+} except e {
+  error("Got an error: ", e.detail)
+}

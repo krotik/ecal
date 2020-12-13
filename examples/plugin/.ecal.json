@@ -1,0 +1,8 @@
+{
+  "stdlibPlugins" : [{
+    "package" : "mypkg",
+    "name" : "myfunc",
+    "path" : "./myfunc.so",
+    "symbol" : "ECALmyfunc"
+  }]
+}

@@ -17,6 +17,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -175,18 +176,20 @@ func (p *CLIPacker) packFiles(w *zip.Writer, filePath string, zipPath string) er
 		for _, file := range files {
 			if !file.IsDir() {
 				var data []byte
-				if data, err = ioutil.ReadFile(filepath.Join(filePath, file.Name())); err == nil {
+				diskfile := filepath.Join(filePath, file.Name())
+				if data, err = ioutil.ReadFile(diskfile); err == nil {
 					var f io.Writer
-					if f, err = w.Create(filepath.Join(zipPath, file.Name())); err == nil {
+					if f, err = w.Create(path.Join(zipPath, file.Name())); err == nil {
 						if bytes, err = f.Write(data); err == nil {
 							fmt.Fprintln(p.LogOut, fmt.Sprintf("Writing %v bytes for %v",
-								bytes, filepath.Join(filePath, file.Name())))
+								bytes, diskfile))
 						}
 					}
 				}
 			} else if file.IsDir() {
+				// Path separator in zipfile is always '/'
 				p.packFiles(w, filepath.Join(filePath, file.Name()),
-					filepath.Join(zipPath, file.Name()))
+					path.Join(zipPath, file.Name()))
 			}
 		}
 	}

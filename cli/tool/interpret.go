@@ -11,11 +11,13 @@
 package tool
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"devt.de/krotik/common/fileutil"
@@ -54,7 +56,8 @@ type CLIInterpreter struct {
 	CustomWelcomeMessage string
 	CustomHelpString     string
 
-	EntryFile string // Entry file for the program
+	EntryFile   string // Entry file for the program
+	LoadPlugins bool   // Flag if stdlib plugins should be loaded
 
 	// Parameter these can either be set programmatically or via CLI args
 
@@ -75,7 +78,8 @@ type CLIInterpreter struct {
 NewCLIInterpreter creates a new commandline interpreter for ECAL.
 */
 func NewCLIInterpreter() *CLIInterpreter {
-	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "", "", nil, nil, nil, nil, os.Stdout}
+	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "", "",
+		true, nil, nil, nil, nil, os.Stdout}
 }
 
 /*
@@ -225,63 +229,105 @@ func (i *CLIInterpreter) Interpret(interactive bool) error {
 		return nil
 	}
 
-	err := i.CreateTerm()
-
-	if interactive {
-		fmt.Fprintln(i.LogOut, fmt.Sprintf("ECAL %v", config.ProductVersion))
-	}
-
-	// Create Runtime Provider
+	err := i.LoadStdlibPlugins(interactive)
 
 	if err == nil {
+		err = i.CreateTerm()
 
-		if err = i.CreateRuntimeProvider("console"); err == nil {
+		if interactive {
+			fmt.Fprintln(i.LogOut, fmt.Sprintf("ECAL %v", config.ProductVersion))
+		}
 
-			tid := i.RuntimeProvider.NewThreadID()
+		// Create Runtime Provider
 
-			if interactive {
-				if lll, ok := i.RuntimeProvider.Logger.(*util.LogLevelLogger); ok {
-					fmt.Fprint(i.LogOut, fmt.Sprintf("Log level: %v - ", lll.Level()))
-				}
+		if err == nil {
 
-				fmt.Fprintln(i.LogOut, fmt.Sprintf("Root directory: %v", *i.Dir))
+			if err = i.CreateRuntimeProvider("console"); err == nil {
 
-				if i.CustomWelcomeMessage != "" {
-					fmt.Fprintln(i.LogOut, fmt.Sprintf(i.CustomWelcomeMessage))
-				}
-			}
-
-			// Execute file if given
-
-			if err = i.LoadInitialFile(tid); err == nil {
-
-				// Drop into interactive shell
+				tid := i.RuntimeProvider.NewThreadID()
 
 				if interactive {
+					if lll, ok := i.RuntimeProvider.Logger.(*util.LogLevelLogger); ok {
+						fmt.Fprint(i.LogOut, fmt.Sprintf("Log level: %v - ", lll.Level()))
+					}
 
-					// Add history functionality without file persistence
+					fmt.Fprintln(i.LogOut, fmt.Sprintf("Root directory: %v", *i.Dir))
 
-					i.Term, err = termutil.AddHistoryMixin(i.Term, "",
-						func(s string) bool {
-							return i.isExitLine(s)
-						})
+					if i.CustomWelcomeMessage != "" {
+						fmt.Fprintln(i.LogOut, fmt.Sprintf(i.CustomWelcomeMessage))
+					}
+				}
 
-					if err == nil {
+				// Execute file if given
 
-						if err = i.Term.StartTerm(); err == nil {
-							var line string
+				if err = i.LoadInitialFile(tid); err == nil {
 
-							defer i.Term.StopTerm()
+					// Drop into interactive shell
 
-							fmt.Fprintln(i.LogOut, "Type 'q' or 'quit' to exit the shell and '?' to get help")
+					if interactive {
 
-							line, err = i.Term.NextLine()
-							for err == nil && !i.isExitLine(line) {
-								trimmedLine := strings.TrimSpace(line)
+						// Add history functionality without file persistence
 
-								i.HandleInput(i.Term, trimmedLine, tid)
+						i.Term, err = termutil.AddHistoryMixin(i.Term, "",
+							func(s string) bool {
+								return i.isExitLine(s)
+							})
+
+						if err == nil {
+
+							if err = i.Term.StartTerm(); err == nil {
+								var line string
+
+								defer i.Term.StopTerm()
+
+								fmt.Fprintln(i.LogOut, "Type 'q' or 'quit' to exit the shell and '?' to get help")
 
 								line, err = i.Term.NextLine()
+								for err == nil && !i.isExitLine(line) {
+									trimmedLine := strings.TrimSpace(line)
+
+									i.HandleInput(i.Term, trimmedLine, tid)
+
+									line, err = i.Term.NextLine()
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return err
+}
+
+/*
+LoadStdlibPlugins load plugins from .ecal.json.
+*/
+func (i *CLIInterpreter) LoadStdlibPlugins(interactive bool) error {
+	var err error
+
+	if i.LoadPlugins {
+		confFile := filepath.Join(*i.Dir, ".ecal.json")
+		if ok, _ := fileutil.PathExists(confFile); ok {
+
+			if interactive {
+				fmt.Fprintln(i.LogOut, fmt.Sprintf("Loading stdlib plugins from %v", confFile))
+			}
+
+			var content []byte
+			if content, err = ioutil.ReadFile(confFile); err == nil {
+				var conf map[string]interface{}
+				if err = json.Unmarshal(content, &conf); err == nil {
+					if stdlibPlugins, ok := conf["stdlibPlugins"]; ok {
+						err = fmt.Errorf("Config stdlibPlugins should be a list")
+						if plugins, ok := stdlibPlugins.([]interface{}); ok {
+							err = nil
+							if errs := stdlib.LoadStdlibPlugins(plugins); len(errs) > 0 {
+								for _, e := range errs {
+									fmt.Fprintln(i.LogOut, fmt.Sprintf("Error loading plugins: %v", e))
+								}
+								err = fmt.Errorf("Could not load plugins defined in .ecal.json")
 							}
 						}
 					}

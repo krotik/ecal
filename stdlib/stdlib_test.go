@@ -13,7 +13,9 @@ package stdlib
 import (
 	"fmt"
 	"math"
+	"plugin"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -128,4 +130,130 @@ func TestAddStdLibFunc(t *testing.T) {
 		t.Error("Unexpected error:", err)
 		return
 	}
+}
+
+func TestAddPluginStdLibFunc(t *testing.T) {
+	var err error
+
+	// Uncomment the commented parts in this test to run against an
+	// actual compiled plugin in the examples/plugin directory
+
+	/*
+		err = AddStdlibPluginFunc("foo", "bar", filepath.Join("..", "examples", "plugin", "myfunc.so"), "ECALmyfunc")
+
+		if err != nil {
+			t.Error("Unexpected result:", err)
+			return
+		}
+	*/
+
+	pluginTestLookup = &testLookup{&testECALPluginFunction{}, nil}
+
+	err = AddStdlibPluginFunc("foo", "bar", "", "ECALmyfunc")
+
+	pluginTestLookup = nil
+
+	if err != nil {
+		t.Error("Unexpected result:", err)
+		return
+	}
+
+	pluginTestLookup = &testLookup{&testECALPluginFunction{}, nil}
+
+	errs := LoadStdlibPlugins([]interface{}{
+		map[string]interface{}{
+			"package": "foo",
+			"name":    "bar",
+			"path":    "",
+			"symbol":  "ECALmyfunc",
+		},
+		map[string]interface{}{
+			"package": "foo",
+			"name":    "bar",
+			"path":    "",
+			"symbol":  "showerror",
+		},
+	})
+
+	pluginTestLookup = nil
+
+	if fmt.Sprint(errs) != "[Test lookup error]" {
+		t.Error("Unexpected result:", errs)
+		return
+	}
+
+	pfunc, ok := GetStdlibFunc("foo.bar")
+
+	if !ok {
+		t.Error("Unexpected result:", pfunc, ok)
+		return
+	}
+
+	res, err := pfunc.Run("", nil, nil, 0, []interface{}{"John"})
+
+	if err != nil || res != "Hello World for John" {
+		t.Error("Unexpected result:", res, err)
+		return
+	}
+
+	// Test errors
+
+	/*
+		err = AddStdlibPluginFunc("foo", "bar", filepath.Join("..", "examples", "plugin", "myfunc.so"), "Greeting")
+
+		if err == nil || err.Error() != "Symbol Greeting is not a stdlib function" {
+			t.Error("Unexpected result:", err)
+			return
+		}
+
+		err = AddStdlibPluginFunc("foo", "bar", filepath.Join("..", "examples", "plugin", "myfunc.so"), "foo")
+
+		if err == nil || !strings.Contains(err.Error(), "symbol foo not found") {
+			t.Error("Unexpected result:", err)
+			return
+		}
+	*/
+
+	pluginTestLookup = &testLookup{"foo", nil}
+	err = AddStdlibPluginFunc("foo", "bar", "", "Greeting")
+
+	if err == nil || err.Error() != "Symbol Greeting is not a stdlib function" {
+		t.Error("Unexpected result:", err)
+		return
+	}
+
+	pluginTestLookup = &testLookup{nil, fmt.Errorf("symbol foo not found")}
+	err = AddStdlibPluginFunc("foo", "bar", "", "foo")
+
+	if err == nil || !strings.Contains(err.Error(), "symbol foo not found") {
+		t.Error("Unexpected result:", err)
+		return
+	}
+}
+
+type testLookup struct {
+	ret interface{}
+	err error
+}
+
+func (tl *testLookup) Lookup(symName string) (plugin.Symbol, error) {
+	if symName == "showerror" {
+		return nil, fmt.Errorf("Test lookup error")
+	}
+	return tl.ret, tl.err
+}
+
+type testECALPluginFunction struct {
+}
+
+func (tf *testECALPluginFunction) Run(args []interface{}) (interface{}, error) {
+	if len(args) == 0 {
+		return "", fmt.Errorf("Need a name to greet as argument")
+	}
+
+	return fmt.Sprintf("Hello World for %v", args[0]), nil
+}
+
+func (tf *testECALPluginFunction) DocString() string {
+	return "Myfunc is an example function"
 }
