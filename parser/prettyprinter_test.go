@@ -29,7 +29,7 @@ func TestErrorHandling(t *testing.T) {
 	astres.Children[1].Children[1] = nil
 
 	ppres, err := PrettyPrint(astres)
-	if err == nil || err.Error() != "Nil pointer in AST at level: 2" {
+	if err == nil || err.Error() != "Nil pointer in AST" {
 		t.Errorf("Unexpected result: %v error: %v", ppres, err)
 		return
 	}
@@ -203,6 +203,326 @@ or
 
 	if err := UnitTestPrettyPrinting(input, expectedOutput,
 		`a hasprefix "a" and b hassuffix "c" or d like "^.*" and 3 notin x`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestSpecialCasePrinting1(t *testing.T) {
+	input := `a := {"a":1,"b":1,"c":1,"d"  :  1,  "e":1,"f":1,"g":1,"h":1,}`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`a := {
+    "a" : 1,
+    "b" : 1,
+    "c" : 1,
+    "d" : 1,
+    "e" : 1,
+    "f" : 1,
+    "g" : 1,
+    "h" : 1
+}`); err != nil {
+		t.Error(err)
+		return
+	}
+
+	input = `a := {"a":1,"b":1,"c":1,"d"  :  {"a":1,"b":{"a":1,"b":1,"c":1,"d":1},"c":1,"d"  :  1,  "e":1,"f":{"a":1,"b":1},"g":1,"h":1,},  "e":1,"f":1,"g":1,"h":1,}`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`a := {
+    "a" : 1,
+    "b" : 1,
+    "c" : 1,
+    "d" : {
+        "a" : 1,
+        "b" : {
+            "a" : 1,
+            "b" : 1,
+            "c" : 1,
+            "d" : 1
+        },
+        "c" : 1,
+        "d" : 1,
+        "e" : 1,
+        "f" : {"a" : 1, "b" : 1},
+        "g" : 1,
+        "h" : 1
+    },
+    "e" : 1,
+    "f" : 1,
+    "g" : 1,
+    "h" : 1
+}`); err != nil {
+		t.Error(err)
+		return
+	}
+
+	input = `a := [1,2,3,[1,2,[1,2],3,[1,2,3,4],[1,2,3,4,5],4,5],4,5]`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`a := [
+    1,
+    2,
+    3,
+    [
+        1,
+        2,
+        [1, 2],
+        3,
+        [1, 2, 3, 4],
+        [
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        4,
+        5
+    ],
+    4,
+    5
+]`); err != nil {
+		t.Error(err)
+		return
+	}
+
+	input = `a := [1,2,3,[1,2,{"a":1,"b":1,"c":1,"d":1},3,[1,2,3,4],4,5],4,5]`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`a := [
+    1,
+    2,
+    3,
+    [
+        1,
+        2,
+        {
+            "a" : 1,
+            "b" : 1,
+            "c" : 1,
+            "d" : 1
+        },
+        3,
+        [1, 2, 3, 4],
+        4,
+        5
+    ],
+    4,
+    5
+]`); err != nil {
+		t.Error(err)
+		return
+	}
+
+}
+
+func TestSpecialCasePrinting2(t *testing.T) {
+	input := `
+a := 1
+a := 2
+sink RegisterNewPlayer
+  kindmatch   ["foo",2]
+  statematch {"a":1,"b":1,"c":1,"d":1}
+scopematch []
+suppresses ["abs"]
+priority 0
+{
+log("1223")
+log("1223")
+func foo (z=[1,2,3,4,5]) {
+a := 1
+b := 2
+}
+log("1223")
+try {
+x := [1,2,3,4]
+    raise("test 12", null, [1,2,3])
+} except e {
+p := 1
+}
+}
+`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`a := 1
+a := 2
+sink RegisterNewPlayer
+    kindmatch ["foo", 2]
+    statematch {
+        "a" : 1,
+        "b" : 1,
+        "c" : 1,
+        "d" : 1
+    }
+    scopematch []
+    suppresses ["abs"]
+    priority 0
+{
+    log("1223")
+    log("1223")
+    func foo(z=[
+        1,
+        2,
+        3,
+        4,
+        5
+    ]) {
+        a := 1
+        b := 2
+    }
+    log("1223")
+    try {
+        x := [1, 2, 3, 4]
+        raise("test 12", null, [1, 2, 3])
+    } except e {
+        p := 1
+    }
+}`); err != nil {
+		t.Error(err)
+	}
+
+	input = `
+	/*
+
+	Some initial comment
+	
+	bla
+	*/
+a := 1
+func aaa() {
+mutex myresource {
+  globalResource := "new value"
+}
+func myfunc(a, b, c=1) {
+  a := 1 + 1 # Test
+}
+x := [ 1,2,3,4,5]
+a:=1;b:=1
+/*Foo*/
+Foo := {
+  "super" : [ Bar ]
+  
+  /* 
+   * Object IDs
+   */
+  "id" : 0 # aaaa
+  "idx" : 0
+
+/*Constructor*/
+  "init" : func(id) 
+{ 
+    super[0]()
+    this.id := id
+  }
+
+  /* 
+  Return the object ID
+  */
+  "getId" : func() {
+      return this.idx
+  }
+
+  /* 
+    Set the object ID
+  */
+  "setId" : func(id) {
+      this.idx := id
+  }
+}
+for a in range(2, 10, 2) {
+	a := 1
+}
+for a > 0 {
+  a := 1
+}
+if a == 1 {
+    a := a + 1
+} elif a == 2 {
+    a := a + 2
+} else {
+    a := 99
+}
+try {
+    raise("MyError", "My error message", [1,2,3])
+} except "MyError" as e {
+    log(e)
+}
+}
+b:=1
+`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`/* 
+ 
+ Some initial comment
+ 
+ bla
+ */
+a := 1
+func aaa() {
+    mutex myresource {
+        globalResource := "new value"
+    }
+    
+    func myfunc(a, b, c=1) {
+        a := 1 + 1 # Test
+    }
+    x := [
+        1,
+        2,
+        3,
+        4,
+        5
+    ]
+    a := 1
+    b := 1
+    /* Foo */
+    Foo := {
+        "super" : [Bar],
+        /* 
+         * Object IDs
+         */
+        "id" : 0 # aaaa,
+        "idx" : 0,
+        /* Constructor */
+        "init" : func (id) {
+            super[0]()
+            this.id := id
+        },
+        /* 
+         Return the object ID
+         */
+        "getId" : func () {
+            return this.idx
+        },
+        /* 
+         Set the object ID
+         */
+        "setId" : func (id) {
+            this.idx := id
+        }
+    }
+    for a in range(2, 10, 2) {
+        a := 1
+    }
+    for a > 0 {
+        a := 1
+    }
+    if a == 1 {
+        a := a + 1
+    } elif a == 2 {
+        a := a + 2
+    } else {
+        a := 99
+    }
+    try {
+        raise("MyError", "My error message", [1, 2, 3])
+    } except "MyError" as e {
+        log(e)
+    }
+}
+b := 1`); err != nil {
 		t.Error(err)
 		return
 	}

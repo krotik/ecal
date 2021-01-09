@@ -25,8 +25,6 @@ import (
 Format formats a given set of ECAL files.
 */
 func Format() error {
-	var err error
-
 	wd, _ := os.Getwd()
 
 	dir := flag.String("dir", wd, "Root directory for ECAL files")
@@ -54,31 +52,49 @@ func Format() error {
 
 	fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Formatting all %v files in %v", *ext, *dir))
 
-	err = filepath.Walk(*dir,
-		func(path string, i os.FileInfo, err error) error {
-			if err == nil && !i.IsDir() {
-				var data []byte
-				var ast *parser.ASTNode
-				var srcFormatted string
+	return FormatFiles(*dir, *ext)
+}
 
-				if strings.HasSuffix(path, *ext) {
-					if data, err = ioutil.ReadFile(path); err == nil {
-						var ferr error
+/*
+FormatFiles formats all ECAL files in a given directory with a given ending.
+*/
+func FormatFiles(dir string, ext string) error {
+	var err error
 
-						if ast, ferr = parser.Parse(path, string(data)); ferr == nil {
-							if srcFormatted, ferr = parser.PrettyPrint(ast); ferr == nil {
-								ioutil.WriteFile(path, []byte(srcFormatted), i.Mode())
+	// Try to resolve symbolic links
+
+	scanDir, lerr := os.Readlink(dir)
+	if lerr != nil {
+		scanDir = dir
+	}
+
+	if err == nil {
+		err = filepath.Walk(scanDir,
+			func(path string, i os.FileInfo, err error) error {
+				if err == nil && !i.IsDir() {
+					var data []byte
+					var ast *parser.ASTNode
+					var srcFormatted string
+
+					if strings.HasSuffix(path, ext) {
+						if data, err = ioutil.ReadFile(path); err == nil {
+							var ferr error
+
+							if ast, ferr = parser.Parse(path, string(data)); ferr == nil {
+								if srcFormatted, ferr = parser.PrettyPrint(ast); ferr == nil {
+									ioutil.WriteFile(path, []byte(fmt.Sprintln(srcFormatted)), i.Mode())
+								}
 							}
-						}
 
-						if ferr != nil {
-							fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Could not format %v: %v", path, ferr))
+							if ferr != nil {
+								fmt.Fprintln(flag.CommandLine.Output(), fmt.Sprintf("Could not format %v: %v", path, ferr))
+							}
 						}
 					}
 				}
-			}
-			return err
-		})
+				return err
+			})
+	}
 
 	return err
 }

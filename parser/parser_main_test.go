@@ -102,10 +102,10 @@ func TestCommentParsing(t *testing.T) {
 
 	// Comment parsing without statements
 
-	input := `/* This is  a comment*/ a := 1 + 1 # foo bar`
+	input := `/* This is  a comment */ a := 1 + 1 # foo bar`
 	expectedOutput := `
 :=
-  identifier: a #  This is  a comment
+  identifier: a #  This is  a comment 
   plus
     number: 1
     number: 1 #  foo bar

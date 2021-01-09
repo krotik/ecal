@@ -7,13 +7,10 @@ ECAL
 
 ECAL is an ECA (Event Condition Action) language for concurrent event processing. ECAL can define event-based systems using rules which are triggered by events. ECAL is intended to be embedded into other software to provide an easy to use scripting language which can react to external events.
 
-<p>
-<a href="https://void.devt.de/pub/ecal/coverage.txt"><img src="https://void.devt.de/pub/ecal/test_result.svg" alt="Code coverage"></a>
-<a href="https://goreportcard.com/report/devt.de/krotik/ecal">
-<img src="https://goreportcard.com/badge/devt.de/krotik/ecal?style=flat-square" alt="Go Report Card"></a>
-<a href="https://godoc.org/devt.de/krotik/ecal">
-<img src="https://godoc.org/devt.de/krotik/ecal?status.svg" alt="Go Doc"></a>
-</p>
+[![Code coverage](https://void.devt.de/pub/ecal/test_result.svg)](https://void.devt.de/pub/ecal/coverage.txt)
+[![Go Report Card](https://goreportcard.com/badge/devt.de/krotik/ecal?style=flat-square)](https://goreportcard.com/report/devt.de/krotik/ecal)
+[![Go Reference](https://pkg.go.dev/badge/krotik/ecal.svg)](https://pkg.go.dev/devt.de/krotik/ecal)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge-flat.svg)](https://github.com/avelino/awesome-go)
 
 Features
 --------
@@ -83,7 +80,7 @@ The interpreter can be run in debug mode which adds debug commands to the consol
 
 It is possible to package your ECAL project into an executable that can be run without a separate ECAL interpreter. Run the `sh pack.sh` and see the script for details.
 
-### Embedding ECAL
+### Embedding ECAL and using event processing
 
 The primary purpose of ECAL is to be a simple multi-purpose language which can be embedded into other software:
 - It has a minimal (quite generic) syntax.
@@ -115,9 +112,11 @@ If events are to be used then the processor of the runtime provider needs to be 
 ```
 rtp.Processor.Start()
 ```
+The processor must be started *after* all sinks have been declared and *before* events are thrown.
+
 Events can then be injected into the interpreter.
 ```
-monitor, err := rtp.Processor.AddEventAndWait(engine.NewEvent("MyEvent", []string{"foo", "bar"}, map[interface{}]interface{}{
+monitor, err := rtp.Processor.AddEventAndWait(engine.NewEvent("MyEvent", []string{"foo", "bar", "myevent"}, map[interface{}]interface{}{
   "data1": 123,
   "data2": "123",
 }), nil)
@@ -125,6 +124,20 @@ monitor, err := rtp.Processor.AddEventAndWait(engine.NewEvent("MyEvent", []strin
 All errors are collected in the returned monitor.
 ```
 monitor.RootMonitor().AllErrors()
+```
+The above event could be handled in ECAL with the following sinks:
+```
+sink mysink
+  kindmatch [ "foo.bar.myevent" ],
+{
+  log("Got event: ", event)
+}
+
+sink mysink2
+  kindmatch [ "foo.*.*" ],
+{
+  log("Got event: ", event)
+}
 ```
 
 ### Using Go plugins in ECAL

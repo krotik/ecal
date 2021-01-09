@@ -11,6 +11,7 @@
 package scope
 
 import (
+	"fmt"
 	"testing"
 
 	"devt.de/krotik/ecal/parser"
@@ -38,4 +39,32 @@ func TestScopeConversion(t *testing.T) {
 		t.Error("Unexpected result:", vs.String(), vs2.String())
 		return
 	}
+}
+
+func TestConvertJSONToECALObject(t *testing.T) {
+
+	testJSONStructure := map[string]interface{}{
+		"foo": []interface{}{
+			map[string]interface{}{
+				"bar": "123",
+			},
+		},
+	}
+
+	res := ConvertJSONToECALObject(testJSONStructure)
+
+	if typeString := fmt.Sprintf("%#v", res); typeString !=
+		`map[interface {}]interface {}{"foo":[]interface {}{map[interface {}]interface {}{"bar":"123"}}}` {
+		t.Error("Unexpected result:", typeString)
+		return
+	}
+
+	res = ConvertECALToJSONObject(res)
+
+	if typeString := fmt.Sprintf("%#v", res); typeString !=
+		`map[string]interface {}{"foo":[]interface {}{map[string]interface {}{"bar":"123"}}}` {
+		t.Error("Unexpected result:", typeString)
+		return
+	}
+
 }

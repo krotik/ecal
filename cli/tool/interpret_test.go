@@ -323,7 +323,7 @@ func TestHandleInput(t *testing.T) {
 	l2 := ""
 	tin.LogLevel = &l2
 
-	testTerm.in = []string{"?", "@reload", "@sym", "@std", "@cus", "q"}
+	testTerm.in = []string{"?", "@format", "@reload", "@sym", "@std", "@cus", "q"}
 
 	if err := tin.Interpret(true); err != nil {
 		t.Error("Unexpected result:", err)
@@ -346,7 +346,7 @@ func TestHandleInput(t *testing.T) {
 		return
 	}
 
-	if testTerm.out.String() != `╒═════════════════╤═══════════════════════════════╕
+	if strings.HasSuffix(testTerm.out.String(), `╒═════════════════╤═══════════════════════════════╕
 │Inbuild function │Description                    │
 ╞═════════════════╪═══════════════════════════════╡
 │raise            │Raise returns an error object. │
@@ -364,7 +364,8 @@ func TestHandleInput(t *testing.T) {
 │foo.Println │xxx         │
 │            │            │
 ╘════════════╧════════════╛
-` {
+
+`) {
 		t.Error("Unexpected result:", testTerm.out.String())
 		return
 	}

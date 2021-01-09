@@ -45,16 +45,16 @@ type CLIDebugInterpreter struct {
 	BreakOnStart    *bool   // Flag if the debugger should stop the execution on start
 	BreakOnError    *bool   // Flag if the debugger should stop when encountering an error
 
-	// Log output
+	LogOut io.Writer // Log output
 
-	LogOut io.Writer
+	debugServer *debugTelnetServer // Debug server if started
 }
 
 /*
 NewCLIDebugInterpreter wraps an existing CLIInterpreter object and adds capabilities.
 */
 func NewCLIDebugInterpreter(i *CLIInterpreter) *CLIDebugInterpreter {
-	return &CLIDebugInterpreter{i, nil, nil, nil, nil, nil, nil, os.Stdout}
+	return &CLIDebugInterpreter{i, nil, nil, nil, nil, nil, nil, os.Stdout, nil}
 }
 
 /*
@@ -112,26 +112,33 @@ func (i *CLIDebugInterpreter) Interpret() error {
 
 			// Start the debug server
 
-			debugServer := &debugTelnetServer{*i.DebugServerAddr, "ECALDebugServer: ",
+			i.debugServer = &debugTelnetServer{*i.DebugServerAddr, "ECALDebugServer: ",
 				nil, true, *i.EchoDebugServer, i, i.RuntimeProvider.Logger}
 
 			wg := &sync.WaitGroup{}
 			wg.Add(1)
-			go debugServer.Run(wg)
+			go i.debugServer.Run(wg)
 			wg.Wait()
 
-			defer func() {
-				if debugServer.listener != nil {
-					debugServer.listen = false
-					debugServer.listener.Close() // Attempt to cleanup
-				}
-			}()
+			if *i.Interactive {
+				defer i.StopDebugServer()
+			}
 		}
 
 		err = i.CLIInterpreter.Interpret(*i.Interactive)
 	}
 
 	return err
+}
+
+/*
+StopDebugServer stops the debug server if it was started.
+*/
+func (i *CLIDebugInterpreter) StopDebugServer() {
+	if i.debugServer != nil && i.debugServer.listener != nil {
+		i.debugServer.listen = false
+		i.debugServer.listener.Close() // Attempt to cleanup
+	}
 }
 
 /*

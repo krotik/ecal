@@ -63,3 +63,61 @@ func ToScope(name string, o map[interface{}]interface{}) parser.Scope {
 	}
 	return vs
 }
+
+/*
+ConvertJSONToECALObject converts a JSON container structure into an object which
+can be used by ECAL.
+*/
+func ConvertJSONToECALObject(v interface{}) interface{} {
+	res := v
+
+	if mapContainer, ok := v.(map[string]interface{}); ok {
+		newRes := make(map[interface{}]interface{})
+
+		for mk, mv := range mapContainer {
+			newRes[mk] = ConvertJSONToECALObject(mv)
+		}
+
+		res = newRes
+
+	} else if mapList, ok := v.([]interface{}); ok {
+		newRes := make([]interface{}, len(mapList))
+
+		for i, lv := range mapList {
+			newRes[i] = ConvertJSONToECALObject(lv)
+		}
+
+		res = newRes
+	}
+
+	return res
+}
+
+/*
+ConvertECALToJSONObject converts an ECAL container structure into an object which
+can be marshalled into a JSON string.
+*/
+func ConvertECALToJSONObject(v interface{}) interface{} {
+	res := v
+
+	if mapContainer, ok := v.(map[interface{}]interface{}); ok {
+		newRes := make(map[string]interface{})
+
+		for mk, mv := range mapContainer {
+			newRes[fmt.Sprint(mk)] = ConvertECALToJSONObject(mv)
+		}
+
+		res = newRes
+
+	} else if mapList, ok := v.([]interface{}); ok {
+		newRes := make([]interface{}, len(mapList))
+
+		for i, lv := range mapList {
+			newRes[i] = ConvertECALToJSONObject(lv)
+		}
+
+		res = newRes
+	}
+
+	return res
+}

@@ -147,7 +147,7 @@ func markASTNodesAsPrettyPrinted(n *ASTNode) {
 
 func UnitTestPrettyPrinting(input, astOutput, ppOutput string) error {
 	astres, err := ParseWithRuntime("mytest", input, &DummyRuntimeProvider{})
-	if err != nil || fmt.Sprint(astres) != astOutput {
+	if err != nil || (astOutput != "" && fmt.Sprint(astres) != astOutput) {
 		return fmt.Errorf("Unexpected parser output:\n%v expected was:\n%v Error: %v", astres, astOutput, err)
 	}
 
@@ -161,7 +161,7 @@ func UnitTestPrettyPrinting(input, astOutput, ppOutput string) error {
 	// Make sure the pretty printed result is valid and gets the same parse tree
 
 	astres2, err := ParseWithRuntime("mytest", ppres, &DummyRuntimeProvider{})
-	if err != nil || fmt.Sprint(astres2) != astOutput {
+	if err != nil || (astOutput != "" && fmt.Sprint(astres2) != astOutput) {
 		return fmt.Errorf("Unexpected parser output from pretty print string:\n%v expected was:\n%v Error: %v", astres2, astOutput, err)
 	}
 

@@ -11,14 +11,21 @@
 package parser
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/stringutil"
 )
+
+/*
+IndentationLevel is the level of indentation which the pretty printer should use
+*/
+const IndentationLevel = 4
 
 /*
 Map of AST nodes corresponding to lexer tokens
@@ -126,7 +133,7 @@ func init() {
 
 		// Loop statement
 
-		NodeLOOP + "_2": template.Must(template.New(NodeLOOP).Parse("for {{.c1}} {\n{{.c2}}}\n")),
+		NodeLOOP + "_2": template.Must(template.New(NodeLOOP).Parse("for {{.c1}} {\n{{.c2}}}")),
 		NodeBREAK:       template.Must(template.New(NodeBREAK).Parse("break")),
 		NodeCONTINUE:    template.Must(template.New(NodeCONTINUE).Parse("continue")),
 
@@ -153,13 +160,13 @@ func init() {
 PrettyPrint produces pretty printed code from a given AST.
 */
 func PrettyPrint(ast *ASTNode) (string, error) {
-	var visit func(ast *ASTNode, level int) (string, error)
+	var visit func(ast *ASTNode, path []*ASTNode) (string, error)
 
-	visit = func(ast *ASTNode, level int) (string, error) {
+	visit = func(ast *ASTNode, path []*ASTNode) (string, error) {
 		var buf bytes.Buffer
 
 		if ast == nil {
-			return "", fmt.Errorf("Nil pointer in AST at level: %v", level)
+			return "", fmt.Errorf("Nil pointer in AST")
 		}
 
 		numChildren := len(ast.Children)
@@ -171,7 +178,7 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 
 		if numChildren > 0 {
 			for i, child := range ast.Children {
-				res, err := visit(child, level+1)
+				res, err := visit(child, append(path, child))
 				if err != nil {
 					return "", err
 				}
@@ -190,11 +197,13 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 			tempKey += fmt.Sprint("_", len(tempParam))
 		}
 
-		if res, ok := ppSpecialDefs(ast, level, tempParam, &buf); ok {
+		if res, ok := ppSpecialDefs(ast, path, tempParam, &buf); ok {
 			return res, nil
-		} else if res, ok := ppSpecialBlocks(ast, level, tempParam, &buf); ok {
+		} else if res, ok := ppSpecialBlocks(ast, path, tempParam, &buf); ok {
 			return res, nil
-		} else if res, ok := ppSpecialStatements(ast, level, tempParam, &buf); ok {
+		} else if res, ok := ppContainerBlocks(ast, path, tempParam, &buf); ok {
+			return res, nil
+		} else if res, ok := ppSpecialStatements(ast, path, tempParam, &buf); ok {
 			return res, nil
 		}
 
@@ -217,26 +226,92 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 
 		errorutil.AssertOk(temp.Execute(&buf, tempParam))
 
-		return ppMetaData(ast, buf.String()), nil
+		return ppPostProcessing(ast, path, buf.String()), nil
 	}
 
-	return visit(ast, 0)
+	res, err := visit(ast, []*ASTNode{ast})
+
+	return strings.TrimSpace(res), err
 }
 
 /*
-ppMetaData pretty prints meta data.
+ppPostProcessing applies post processing rules.
 */
-func ppMetaData(ast *ASTNode, ppString string) string {
+func ppPostProcessing(ast *ASTNode, path []*ASTNode, ppString string) string {
 	ret := ppString
 
 	// Add meta data
 
 	if len(ast.Meta) > 0 {
+
 		for _, meta := range ast.Meta {
+			metaValue := meta.Value()
 			if meta.Type() == MetaDataPreComment {
-				ret = fmt.Sprintf("/*%v*/ %v", meta.Value(), ret)
+				var buf bytes.Buffer
+
+				scanner := bufio.NewScanner(strings.NewReader(metaValue))
+				for scanner.Scan() {
+					buf.WriteString(fmt.Sprintf(" %v\n", strings.TrimSpace(scanner.Text())))
+				}
+				buf.Truncate(buf.Len() - 1) // Remove the last newline
+
+				if strings.Index(buf.String(), "\n") == -1 {
+					buf.WriteString(" ")
+				}
+
+				ret = fmt.Sprintf("/*%v*/\n%v", buf.String(), ret)
+
 			} else if meta.Type() == MetaDataPostComment {
-				ret = fmt.Sprintf("%v #%v", ret, meta.Value())
+				metaValue = strings.TrimSpace(strings.ReplaceAll(metaValue, "\n", ""))
+				ret = fmt.Sprintf("%v # %v", ret, metaValue)
+			}
+		}
+	}
+
+	// Apply indentation
+
+	if len(path) > 1 {
+		if stringutil.IndexOf(ast.Name, []string{
+			NodeSTATEMENTS,
+			NodeMAP,
+			NodeLIST,
+			NodeKINDMATCH,
+			NodeSTATEMATCH,
+			NodeSCOPEMATCH,
+			NodePRIORITY,
+			NodeSUPPRESSES,
+		}) != -1 {
+			parent := path[len(path)-2]
+
+			indentSpaces := stringutil.GenerateRollingString(" ", IndentationLevel)
+			ret = strings.ReplaceAll(ret, "\n", "\n"+indentSpaces)
+
+			// Add initial indent only if we are inside a block statement
+
+			if stringutil.IndexOf(parent.Name, []string{
+				NodeASSIGN,
+				NodePRESET,
+				NodeKVP,
+				NodeLIST,
+				NodeFUNCCALL,
+				NodeKINDMATCH,
+				NodeSTATEMATCH,
+				NodeSCOPEMATCH,
+				NodePRIORITY,
+				NodeSUPPRESSES,
+			}) == -1 {
+				ret = fmt.Sprintf("%v%v", indentSpaces, ret)
+			}
+
+			// Remove indentation from last line unless we have a special case
+
+			if stringutil.IndexOf(parent.Name, []string{
+				NodeSINK,
+			}) == -1 || ast.Name == NodeSTATEMENTS {
+
+				if idx := strings.LastIndex(ret, "\n"); idx != -1 {
+					ret = ret[:idx+1] + ret[idx+IndentationLevel+1:]
+				}
 			}
 		}
 	}
@@ -247,7 +322,7 @@ func ppMetaData(ast *ASTNode, ppString string) string {
 /*
 ppSpecialDefs pretty prints special cases.
 */
-func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+func ppSpecialDefs(ast *ASTNode, path []*ASTNode, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
 	numChildren := len(ast.Children)
 
 	if ast.Name == NodeFUNCCALL {
@@ -259,7 +334,7 @@ func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *by
 			}
 		}
 
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 
 	} else if ast.Name == NodeSINK {
 
@@ -268,7 +343,6 @@ func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *by
 		buf.WriteString("\n")
 
 		for i := 1; i < len(ast.Children)-1; i++ {
-			buf.WriteString("  ")
 			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
 			buf.WriteString("\n")
 		}
@@ -277,7 +351,74 @@ func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *by
 		buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
 		buf.WriteString("}\n")
 
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
+	}
+
+	return "", false
+}
+
+/*
+ppContainerBlocks pretty prints container structures.
+*/
+func ppContainerBlocks(ast *ASTNode, path []*ASTNode, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+	numChildren := len(ast.Children)
+
+	if ast.Name == NodeLIST {
+		multilineThreshold := 4
+		buf.WriteString("[")
+
+		if numChildren > multilineThreshold {
+			buf.WriteString("\n")
+		}
+
+		for i := 0; i < numChildren; i++ {
+
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+
+			if i < numChildren-1 {
+				if numChildren > multilineThreshold {
+					buf.WriteString(",")
+				} else {
+					buf.WriteString(", ")
+				}
+			}
+			if numChildren > multilineThreshold {
+				buf.WriteString("\n")
+			}
+		}
+
+		buf.WriteString("]")
+
+		return ppPostProcessing(ast, path, buf.String()), true
+
+	} else if ast.Name == NodeMAP {
+		multilineThreshold := 2
+		buf.WriteString("{")
+
+		if numChildren > multilineThreshold {
+			buf.WriteString("\n")
+		}
+
+		for i := 0; i < numChildren; i++ {
+
+			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
+
+			if i < numChildren-1 {
+				if numChildren > multilineThreshold {
+					buf.WriteString(",")
+				} else {
+					buf.WriteString(", ")
+				}
+			}
+			if numChildren > multilineThreshold {
+				buf.WriteString("\n")
+			}
+		}
+
+		buf.WriteString("}")
+
+		return ppPostProcessing(ast, path, buf.String()), true
+
 	}
 
 	return "", false
@@ -286,48 +427,21 @@ func ppSpecialDefs(ast *ASTNode, level int, tempParam map[string]string, buf *by
 /*
 ppSpecialBlocks pretty prints special cases.
 */
-func ppSpecialBlocks(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+func ppSpecialBlocks(ast *ASTNode, path []*ASTNode, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
 	numChildren := len(ast.Children)
 
 	// Handle special cases - children in tempParam have been resolved
 
-	if stringutil.IndexOf(ast.Name, []string{NodeSTATEMENTS}) != -1 {
+	if ast.Name == NodeSTATEMENTS {
 
 		// For statements just concat all children
 
 		for i := 0; i < numChildren; i++ {
-			buf.WriteString(stringutil.GenerateRollingString(" ", level*4))
 			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
 			buf.WriteString("\n")
 		}
 
-		return ppMetaData(ast, buf.String()), true
-
-	} else if ast.Name == NodeLIST {
-
-		buf.WriteString("[")
-		i := 1
-		for ; i < numChildren; i++ {
-			buf.WriteString(tempParam[fmt.Sprint("c", i)])
-			buf.WriteString(", ")
-		}
-		buf.WriteString(tempParam[fmt.Sprint("c", i)])
-		buf.WriteString("]")
-
-		return ppMetaData(ast, buf.String()), true
-
-	} else if ast.Name == NodeMAP {
-
-		buf.WriteString("{")
-		i := 1
-		for ; i < numChildren; i++ {
-			buf.WriteString(tempParam[fmt.Sprint("c", i)])
-			buf.WriteString(", ")
-		}
-		buf.WriteString(tempParam[fmt.Sprint("c", i)])
-		buf.WriteString("}")
-
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 
 	} else if ast.Name == NodeTRY {
 
@@ -340,9 +454,7 @@ func ppSpecialBlocks(ast *ASTNode, level int, tempParam map[string]string, buf *
 			buf.WriteString(tempParam[fmt.Sprint("c", i+1)])
 		}
 
-		buf.WriteString("\n")
-
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 
 	} else if ast.Name == NodeEXCEPT {
 
@@ -361,7 +473,7 @@ func ppSpecialBlocks(ast *ASTNode, level int, tempParam map[string]string, buf *
 		buf.WriteString(tempParam[fmt.Sprint("c", len(ast.Children))])
 		buf.WriteString("}")
 
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 	}
 
 	return "", false
@@ -370,7 +482,7 @@ func ppSpecialBlocks(ast *ASTNode, level int, tempParam map[string]string, buf *
 /*
 ppSpecialStatements pretty prints special cases.
 */
-func ppSpecialStatements(ast *ASTNode, level int, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
+func ppSpecialStatements(ast *ASTNode, path []*ASTNode, tempParam map[string]string, buf *bytes.Buffer) (string, bool) {
 	numChildren := len(ast.Children)
 
 	if ast.Name == NodeIDENTIFIER {
@@ -390,7 +502,7 @@ func ppSpecialStatements(ast *ASTNode, level int, tempParam map[string]string, b
 			}
 		}
 
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 
 	} else if ast.Name == NodePARAMS {
 
@@ -403,7 +515,7 @@ func ppSpecialStatements(ast *ASTNode, level int, tempParam map[string]string, b
 		buf.WriteString(tempParam[fmt.Sprint("c", i)])
 		buf.WriteString(")")
 
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 
 	} else if ast.Name == NodeIF {
 
@@ -429,9 +541,7 @@ func ppSpecialStatements(ast *ASTNode, level int, tempParam map[string]string, b
 			}
 		}
 
-		buf.WriteString("\n")
-
-		return ppMetaData(ast, buf.String()), true
+		return ppPostProcessing(ast, path, buf.String()), true
 	}
 
 	return "", false

@@ -271,10 +271,10 @@ func TestCommentLexing(t *testing.T) {
 
 	input := `name /* foo
 		bar
-	x*/ 'b/* - */la' /*test*/`
+    x*/ 'b/* - */la' /*test*/`
 	if res := LexToList("mytest", input); fmt.Sprint(res) != `["name" /*  foo
 		bar
-	x */ v:"b/* - */la" /* test */ EOF]` {
+    x */ v:"b/* - */la" /* test */ EOF]` {
 		t.Error("Unexpected lexer result:", res)
 		return
 	}

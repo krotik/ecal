@@ -1,4 +1,5 @@
-ecal
+/ecal
+/ecal.exe
 /.cache
 /.cover
 /.ecal_console_history
@@ -7,6 +8,8 @@ ecal
 /coverage.html
 /dist
 /build
+/examples/embedding/embedding
+/examples/plugin/*.so
 /ecal-support/node_modules
 /ecal-support/out
 /ecal-support/*.vsix
