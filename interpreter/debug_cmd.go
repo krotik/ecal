@@ -35,6 +35,7 @@ var DebugCommandsMap = map[string]util.DebugCommand{
 	"status":       &statusCommand{&inbuildDebugCommand{}},
 	"extract":      &extractCommand{&inbuildDebugCommand{}},
 	"inject":       &injectCommand{&inbuildDebugCommand{}},
+	"lockstate":    &lockstateCommand{&inbuildDebugCommand{}},
 }
 
 /*
@@ -403,4 +404,29 @@ DocString returns a descriptive text about this command.
 */
 func (c *injectCommand) DocString() string {
 	return "Copies a value from the global variable scope into a suspended thread."
+}
+
+// lockstate
+// =========
+
+/*
+lockstateCommand inspects the locking state
+*/
+type lockstateCommand struct {
+	*inbuildDebugCommand
+}
+
+/*
+Execute the debug command and return its result. It must be possible to
+convert the output data into a JSON string.
+*/
+func (c *lockstateCommand) Run(debugger util.ECALDebugger, args []string) (interface{}, error) {
+	return debugger.LockState(), nil
+}
+
+/*
+DocString returns a descriptive text about this command.
+*/
+func (c *lockstateCommand) DocString() string {
+	return "Inspects the locking state."
 }

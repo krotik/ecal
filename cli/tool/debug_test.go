@@ -218,7 +218,7 @@ func TestDebugHandleInput(t *testing.T) {
 	}
 
 	if testTerm.out.String() != `1
-ECAL error in foo: 123 () (Line:1 Pos:1)
+ECAL error in foo (console input): 123 () (Line:1 Pos:1)
 ` {
 		t.Error("Unexpected result:", testTerm.out.String())
 		return
@@ -326,7 +326,7 @@ func TestDebugTelnetServer(t *testing.T) {
 	line = strings.TrimSpace(line)
 
 	if line != `{
-  "EncodedOutput": "RUNBTCBlcnJvciBpbiBmb286IDEyMyAoKSAoTGluZToxIFBvczoxKQo="
+  "EncodedOutput": "RUNBTCBlcnJvciBpbiBmb28gKGNvbnNvbGUgaW5wdXQpOiAxMjMgKCkgKExpbmU6MSBQb3M6MSkK"
 }` {
 		t.Error("Unexpected output:", line)
 		return

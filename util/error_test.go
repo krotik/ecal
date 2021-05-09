@@ -73,6 +73,7 @@ raise(c) (bar2:1)
       "Val": ":=",
       "Identifier": false,
       "AllowEscapes": false,
+      "PrefixNewlines": 0,
       "Lsource": "foo",
       "Lline": 1,
       "Lpos": 2
@@ -87,6 +88,7 @@ raise(c) (bar2:1)
           "Val": "a",
           "Identifier": true,
           "AllowEscapes": false,
+          "PrefixNewlines": 0,
           "Lsource": "foo",
           "Lline": 1,
           "Lpos": 1
@@ -103,6 +105,7 @@ raise(c) (bar2:1)
           "Val": "1",
           "Identifier": false,
           "AllowEscapes": false,
+          "PrefixNewlines": 0,
           "Lsource": "foo",
           "Lline": 1,
           "Lpos": 4
@@ -124,6 +127,7 @@ raise(c) (bar2:1)
         "Val": "print",
         "Identifier": true,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar1",
         "Lline": 1,
         "Lpos": 1
@@ -143,6 +147,7 @@ raise(c) (bar2:1)
                 "Val": "b",
                 "Identifier": true,
                 "AllowEscapes": false,
+                "PrefixNewlines": 0,
                 "Lsource": "bar1",
                 "Lline": 1,
                 "Lpos": 7
@@ -165,6 +170,7 @@ raise(c) (bar2:1)
         "Val": "raise",
         "Identifier": true,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar2",
         "Lline": 1,
         "Lpos": 1
@@ -184,6 +190,7 @@ raise(c) (bar2:1)
                 "Val": "c",
                 "Identifier": true,
                 "AllowEscapes": false,
+                "PrefixNewlines": 0,
                 "Lsource": "bar2",
                 "Lline": 1,
                 "Lpos": 7
@@ -206,6 +213,7 @@ raise(c) (bar2:1)
         "Val": "+",
         "Identifier": false,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar3",
         "Lline": 1,
         "Lpos": 3
@@ -220,6 +228,7 @@ raise(c) (bar2:1)
             "Val": "1",
             "Identifier": false,
             "AllowEscapes": false,
+            "PrefixNewlines": 0,
             "Lsource": "bar3",
             "Lline": 1,
             "Lpos": 1
@@ -236,6 +245,7 @@ raise(c) (bar2:1)
             "Val": "d",
             "Identifier": true,
             "AllowEscapes": false,
+            "PrefixNewlines": 0,
             "Lsource": "bar3",
             "Lline": 1,
             "Lpos": 5
@@ -273,6 +283,7 @@ raise(c) (bar2:1)
       "Val": ":=",
       "Identifier": false,
       "AllowEscapes": false,
+      "PrefixNewlines": 0,
       "Lsource": "foo",
       "Lline": 1,
       "Lpos": 2
@@ -287,6 +298,7 @@ raise(c) (bar2:1)
           "Val": "a",
           "Identifier": true,
           "AllowEscapes": false,
+          "PrefixNewlines": 0,
           "Lsource": "foo",
           "Lline": 1,
           "Lpos": 1
@@ -303,6 +315,7 @@ raise(c) (bar2:1)
           "Val": "1",
           "Identifier": false,
           "AllowEscapes": false,
+          "PrefixNewlines": 0,
           "Lsource": "foo",
           "Lline": 1,
           "Lpos": 4
@@ -324,6 +337,7 @@ raise(c) (bar2:1)
         "Val": "print",
         "Identifier": true,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar1",
         "Lline": 1,
         "Lpos": 1
@@ -343,6 +357,7 @@ raise(c) (bar2:1)
                 "Val": "b",
                 "Identifier": true,
                 "AllowEscapes": false,
+                "PrefixNewlines": 0,
                 "Lsource": "bar1",
                 "Lline": 1,
                 "Lpos": 7
@@ -365,6 +380,7 @@ raise(c) (bar2:1)
         "Val": "raise",
         "Identifier": true,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar2",
         "Lline": 1,
         "Lpos": 1
@@ -384,6 +400,7 @@ raise(c) (bar2:1)
                 "Val": "c",
                 "Identifier": true,
                 "AllowEscapes": false,
+                "PrefixNewlines": 0,
                 "Lsource": "bar2",
                 "Lline": 1,
                 "Lpos": 7
@@ -406,6 +423,7 @@ raise(c) (bar2:1)
         "Val": "+",
         "Identifier": false,
         "AllowEscapes": false,
+        "PrefixNewlines": 0,
         "Lsource": "bar3",
         "Lline": 1,
         "Lpos": 3
@@ -420,6 +438,7 @@ raise(c) (bar2:1)
             "Val": "1",
             "Identifier": false,
             "AllowEscapes": false,
+            "PrefixNewlines": 0,
             "Lsource": "bar3",
             "Lline": 1,
             "Lpos": 1
@@ -436,6 +455,7 @@ raise(c) (bar2:1)
             "Val": "d",
             "Identifier": true,
             "AllowEscapes": false,
+            "PrefixNewlines": 0,
             "Lsource": "bar3",
             "Lline": 1,
             "Lpos": 5

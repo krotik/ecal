@@ -11,10 +11,12 @@
 package interpreter
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"devt.de/krotik/common/datautil"
 	"devt.de/krotik/common/timeutil"
 	"devt.de/krotik/ecal/config"
 	"devt.de/krotik/ecal/engine"
@@ -128,9 +130,10 @@ var providerMap = map[string]ecalRuntimeNew{
 
 	// Try statement
 
-	parser.NodeTRY:     tryRuntimeInst,
-	parser.NodeEXCEPT:  voidRuntimeInst,
-	parser.NodeFINALLY: voidRuntimeInst,
+	parser.NodeTRY:       tryRuntimeInst,
+	parser.NodeEXCEPT:    voidRuntimeInst,
+	parser.NodeOTHERWISE: voidRuntimeInst,
+	parser.NodeFINALLY:   voidRuntimeInst,
 
 	// Mutex block
 
@@ -146,6 +149,9 @@ type ECALRuntimeProvider struct {
 	Logger        util.Logger            // Logger object for log messages
 	Processor     engine.Processor       // Processor of the ECA engine
 	Mutexes       map[string]*sync.Mutex // Map of named mutexes
+	MutexLog      *datautil.RingBuffer   // Ringbuffer to track locking events
+	MutexeOwners  map[string]uint64      // Map of mutex owners
+	MutexesMutex  *sync.Mutex            // Mutex for mutexes map
 	Cron          *timeutil.Cron         // Cron object for scheduled execution
 	Debugger      util.ECALDebugger      // Optional: ECAL Debugger object
 }
@@ -180,7 +186,7 @@ func NewECALRuntimeProvider(name string, importLocator util.ECALImportLocator, l
 	cron.Start()
 
 	return &ECALRuntimeProvider{name, importLocator, logger, proc,
-		make(map[string]*sync.Mutex), cron, nil}
+		make(map[string]*sync.Mutex), datautil.NewRingBuffer(1024), make(map[string]uint64), &sync.Mutex{}, cron, nil}
 }
 
 /*
@@ -199,7 +205,11 @@ func (erp *ECALRuntimeProvider) Runtime(node *parser.ASTNode) parser.Runtime {
 NewRuntimeError creates a new RuntimeError object.
 */
 func (erp *ECALRuntimeProvider) NewRuntimeError(t error, d string, node *parser.ASTNode) error {
-	return util.NewRuntimeError(erp.Name, t, d, node)
+	source := erp.Name
+	if node.Token != nil {
+		source = fmt.Sprintf("%v (%v)", source, node.Token.Lsource)
+	}
+	return util.NewRuntimeError(source, t, d, node)
 }
 
 /*

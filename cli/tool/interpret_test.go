@@ -25,6 +25,7 @@ import (
 	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/fileutil"
 	"devt.de/krotik/ecal/config"
+	"devt.de/krotik/ecal/engine"
 	"devt.de/krotik/ecal/interpreter"
 	"devt.de/krotik/ecal/stdlib"
 	"devt.de/krotik/ecal/util"
@@ -66,6 +67,13 @@ func newTestInterpreterWithConfig() *CLIInterpreter {
 	tin.Dir = &l
 
 	tin.CustomWelcomeMessage = "123"
+	tin.CustomRules = []*engine.Rule{
+		{
+			Name:       "myrule",
+			ScopeMatch: []string{},
+			KindMatch:  []string{"my.custom.rule"},
+		},
+	}
 
 	return tin
 }
@@ -323,7 +331,7 @@ func TestHandleInput(t *testing.T) {
 	l2 := ""
 	tin.LogLevel = &l2
 
-	testTerm.in = []string{"?", "@format", "@reload", "@sym", "@std", "@cus", "q"}
+	testTerm.in = []string{"?", "@format", "@reload", "@prof goroutine", "@sym", "@std", "@cus", "q"}
 
 	if err := tin.Interpret(true); err != nil {
 		t.Error("Unexpected result:", err)
@@ -332,7 +340,7 @@ func TestHandleInput(t *testing.T) {
 
 	// Just check for a simple string no need for the whole thing
 
-	if !strings.Contains(testTerm.out.String(), "New creates a new object instance.") {
+	if !strings.Contains(testTerm.out.String(), "Creates a new object instance.") {
 		t.Error("Unexpected result:", testTerm.out.String())
 		return
 	}
@@ -380,7 +388,7 @@ func TestHandleInput(t *testing.T) {
 	}
 
 	if testTerm.out.String() != `1
-ECAL error in foo: 123 () (Line:1 Pos:1)
+ECAL error in foo (console input): 123 () (Line:1 Pos:1)
 ` {
 		t.Error("Unexpected result:", testTerm.out.String())
 		return

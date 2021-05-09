@@ -331,6 +331,7 @@ log("test3")
             "Val": "raise",
             "Identifier": true,
             "AllowEscapes": false,
+            "PrefixNewlines": 1,
             "Lsource": "ECALEvalTest",
             "Lline": 3,
             "Lpos": 2
@@ -350,6 +351,7 @@ log("test3")
                     "Val": "foo",
                     "Identifier": false,
                     "AllowEscapes": true,
+                    "PrefixNewlines": 0,
                     "Lsource": "ECALEvalTest",
                     "Lline": 3,
                     "Lpos": 8
@@ -364,7 +366,7 @@ log("test3")
           ],
           "Runtime": {}
         },
-        "Source": "ECALTestRuntime",
+        "Source": "ECALTestRuntime (ECALEvalTest)",
         "Trace": null,
         "Type": "foo"
       },
@@ -385,8 +387,8 @@ log("test3")
 
 	if evalError == nil || testlogger.String() != `
 test1
-test2`[1:] || evalError.Error() != "ECAL error in ECALTestRuntime: foo () (Line:3 Pos:2)" {
-		t.Error("Unexpected result:", testlogger.String(), err)
+test2`[1:] || evalError.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): foo () (Line:3 Pos:2)" {
+		t.Error("Unexpected result:", testlogger.String(), evalError, err)
 		return
 	}
 }
@@ -442,6 +444,7 @@ log("test1")
 log("test2")
 test2()
 log("test4")
+mutex a { mutex a { log("test5") } }
 `, vs, erp)
 		if err != nil {
 			t.Error(err)
@@ -509,6 +512,24 @@ log("test4")
 		return
 	}
 
+	ls, err := testDebugger.HandleInput(fmt.Sprintf("lockstate"))
+
+	lsBytes, _ := json.MarshalIndent(ls, "", "  ")
+	lsString := string(lsBytes)
+
+	if lsString != `{
+  "log": [],
+  "owners": {},
+  "threads": {
+    "IdleWorkerThreads": null,
+    "TaskQueueSize": 0,
+    "TotalWorkerThreads": null
+  }
+}` {
+		t.Error("Unexpected result:", lsString)
+		return
+	}
+
 	// Continue until the end
 
 	if _, err := testDebugger.HandleInput(fmt.Sprintf("cont 1 Resume")); err != nil {
@@ -529,8 +550,22 @@ log("test4")
     c (float64) : 2
     test1 (*interpreter.function) : ecal.function: test1 (Line 4, Pos 1)
     test2 (*interpreter.function) : ecal.function: test2 (Line 4, Pos 1)
+    block: mutex (Line:12 Pos:1) {
+        block: mutex (Line:12 Pos:11) {
+        }
+    }
 }` {
 		t.Error("Unexpected result:", vs)
+		return
+	}
+
+	ls, err = testDebugger.HandleInput(fmt.Sprintf("lockstate"))
+
+	lsBytes, _ = json.MarshalIndent(ls, "", "  ")
+	lsString = string(lsBytes)
+
+	if !strings.Contains(lsString, "took lock a with owner") || !strings.Contains(lsString, "attempted to take lock a twice") {
+		t.Error("Unexpected result:", lsString)
 		return
 	}
 }
@@ -1399,7 +1434,7 @@ a()
 	ss := err.(util.TraceableRuntimeError)
 
 	if out := fmt.Sprintf("%v\n  %v", err.Error(), strings.Join(ss.GetTraceString(), "\n  ")); out != `
-ECAL error in ECALTestRuntime: testerror () (Line:9 Pos:2)
+ECAL error in ECALTestRuntime (ECALEvalTest): testerror () (Line:9 Pos:2)
   raise("testerror") (ECALEvalTest:9)
   c() (ECALEvalTest:6)
   b() (ECALEvalTest:3)

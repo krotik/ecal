@@ -16,6 +16,8 @@ import (
 
 func TestConfig(t *testing.T) {
 
+	Config[WorkerCount] = 1
+
 	if res := Str(WorkerCount); res != "1" {
 		t.Error("Unexpected result:", res)
 		return

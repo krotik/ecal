@@ -71,7 +71,16 @@ can be used by ECAL.
 func ConvertJSONToECALObject(v interface{}) interface{} {
 	res := v
 
-	if mapContainer, ok := v.(map[string]interface{}); ok {
+	if mapContainer, ok := v.(map[interface{}]interface{}); ok {
+		newRes := make(map[interface{}]interface{})
+
+		for mk, mv := range mapContainer {
+			newRes[mk] = ConvertJSONToECALObject(mv)
+		}
+
+		res = newRes
+
+	} else if mapContainer, ok := v.(map[string]interface{}); ok {
 		newRes := make(map[interface{}]interface{})
 
 		for mk, mv := range mapContainer {
@@ -81,6 +90,14 @@ func ConvertJSONToECALObject(v interface{}) interface{} {
 		res = newRes
 
 	} else if mapList, ok := v.([]interface{}); ok {
+		newRes := make([]interface{}, len(mapList))
+
+		for i, lv := range mapList {
+			newRes[i] = ConvertJSONToECALObject(lv)
+		}
+
+		res = newRes
+	} else if mapList, ok := v.([]map[string]interface{}); ok {
 		newRes := make([]interface{}, len(mapList))
 
 		for i, lv := range mapList {

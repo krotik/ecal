@@ -17,7 +17,7 @@ import (
 
 func TestNextItem(t *testing.T) {
 
-	l := &lexer{"Test", "1234", 0, 0, 0, 0, 0, make(chan LexToken)}
+	l := &lexer{"Test", "1234", 0, 0, 0, 0, 0, 0, make(chan LexToken)}
 
 	r := l.next(1)
 
@@ -82,6 +82,7 @@ Lpos is different 1 vs 2
   "Val": "not",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "mytest",
   "Lline": 1,
   "Lpos": 1
@@ -93,6 +94,7 @@ vs
   "Val": "test",
   "Identifier": true,
   "AllowEscapes": false,
+  "PrefixNewlines": 1,
   "Lsource": "mytest",
   "Lline": 2,
   "Lpos": 2

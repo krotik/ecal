@@ -67,4 +67,21 @@ func TestConvertJSONToECALObject(t *testing.T) {
 		return
 	}
 
+	testJSONStructure2 := map[interface{}]interface{}{"data": map[interface{}]interface{}{"obj": []map[string]interface{}{{"key": "LovelyRabbit"}}}}
+
+	res = ConvertJSONToECALObject(testJSONStructure2)
+
+	if typeString := fmt.Sprintf("%#v", res); typeString !=
+		`map[interface {}]interface {}{"data":map[interface {}]interface {}{"obj":[]interface {}{map[interface {}]interface {}{"key":"LovelyRabbit"}}}}` {
+		t.Error("Unexpected result:", typeString)
+		return
+	}
+
+	res = ConvertECALToJSONObject(res)
+
+	if typeString := fmt.Sprintf("%#v", res); typeString !=
+		`map[string]interface {}{"data":map[string]interface {}{"obj":[]interface {}{map[string]interface {}{"key":"LovelyRabbit"}}}}` {
+		t.Error("Unexpected result:", typeString)
+		return
+	}
 }

@@ -35,14 +35,15 @@ var numberPattern = regexp.MustCompile("^[0-9].*$")
 LexToken represents a token which is returned by the lexer.
 */
 type LexToken struct {
-	ID           LexTokenID // Token kind
-	Pos          int        // Starting position (in bytes)
-	Val          string     // Token value
-	Identifier   bool       // Flag if the value is an identifier (not quoted and not a number)
-	AllowEscapes bool       // Flag if the value did interpret escape charaters
-	Lsource      string     // Input source label (e.g. filename)
-	Lline        int        // Line in the input this token appears
-	Lpos         int        // Position in the input line this token appears
+	ID             LexTokenID // Token kind
+	Pos            int        // Starting position (in bytes)
+	Val            string     // Token value
+	Identifier     bool       // Flag if the value is an identifier (not quoted and not a number)
+	AllowEscapes   bool       // Flag if the value did interpret escape charaters
+	PrefixNewlines int        // Number of newlines which precede this token
+	Lsource        string     // Input source label (e.g. filename)
+	Lline          int        // Line in the input this token appears
+	Lpos           int        // Position in the input line this token appears
 }
 
 /*
@@ -55,6 +56,7 @@ func NewLexTokenInstance(t LexToken) *LexToken {
 		t.Val,
 		t.Identifier,
 		t.AllowEscapes,
+		t.PrefixNewlines,
 		t.Lsource,
 		t.Lline,
 		t.Lpos,
@@ -246,9 +248,10 @@ var KeywordMap = map[string]LexTokenID{
 
 	// Try block
 
-	"try":     TokenTRY,
-	"except":  TokenEXCEPT,
-	"finally": TokenFINALLY,
+	"try":       TokenTRY,
+	"except":    TokenEXCEPT,
+	"otherwise": TokenOTHERWISE,
+	"finally":   TokenFINALLY,
 
 	// Mutex block
 
@@ -321,21 +324,22 @@ type lexFunc func(*lexer) lexFunc
 Lexer data structure
 */
 type lexer struct {
-	name   string        // Name to identify the input
-	input  string        // Input string of the lexer
-	pos    int           // Current rune pointer
-	line   int           // Current line pointer
-	lastnl int           // Last newline position
-	width  int           // Width of last rune
-	start  int           // Start position of the current red token
-	tokens chan LexToken // Channel for lexer output
+	name           string        // Name to identify the input
+	input          string        // Input string of the lexer
+	pos            int           // Current rune pointer
+	line           int           // Current line pointer
+	lastnl         int           // Last newline position
+	skippedNewline int           // Number of skipped newlines
+	width          int           // Width of last rune
+	start          int           // Start position of the current red token
+	tokens         chan LexToken // Channel for lexer output
 }
 
 /*
 Lex lexes a given input. Returns a channel which contains tokens.
 */
 func Lex(name string, input string) chan LexToken {
-	l := &lexer{name, input, 0, 0, 0, 0, 0, make(chan LexToken)}
+	l := &lexer{name, input, 0, 0, 0, 0, 0, 0, make(chan LexToken)}
 	go l.run()
 	return l.tokens
 }
@@ -428,7 +432,7 @@ func (l *lexer) emitToken(t LexTokenID) {
 	}
 
 	if l.tokens != nil {
-		l.tokens <- LexToken{t, l.start, l.input[l.start:l.pos], false, false, l.name,
+		l.tokens <- LexToken{t, l.start, l.input[l.start:l.pos], false, false, l.skippedNewline, l.name,
 			l.line + 1, l.start - l.lastnl + 1}
 	}
 }
@@ -438,7 +442,8 @@ emitTokenAndValue passes a token with a given value back to the client.
 */
 func (l *lexer) emitTokenAndValue(t LexTokenID, val string, identifier bool, allowEscapes bool) {
 	if l.tokens != nil {
-		l.tokens <- LexToken{t, l.start, val, identifier, allowEscapes, l.name, l.line + 1, l.start - l.lastnl + 1}
+		l.tokens <- LexToken{t, l.start, val, identifier, allowEscapes, l.skippedNewline,
+			l.name, l.line + 1, l.start - l.lastnl + 1}
 	}
 }
 
@@ -447,7 +452,8 @@ emitError passes an error token back to the client.
 */
 func (l *lexer) emitError(msg string) {
 	if l.tokens != nil {
-		l.tokens <- LexToken{TokenError, l.start, msg, false, false, l.name, l.line + 1, l.start - l.lastnl + 1}
+		l.tokens <- LexToken{TokenError, l.start, msg, false, false, l.skippedNewline,
+			l.name, l.line + 1, l.start - l.lastnl + 1}
 	}
 }
 
@@ -460,10 +466,12 @@ reaches EOF while skipping whitespaces.
 */
 func skipWhiteSpace(l *lexer) bool {
 	r := l.next(0)
+	l.skippedNewline = 0
 
 	for unicode.IsSpace(r) || unicode.IsControl(r) || r == RuneEOF {
 		if r == '\n' {
 			l.line++
+			l.skippedNewline++
 			l.lastnl = l.pos
 		}
 		r = l.next(0)

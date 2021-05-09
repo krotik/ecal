@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-const InvalidFileName = "**" + string(0x0)
+const InvalidFileName = "**\x00"
 
 func TestGenerate(t *testing.T) {
 	filename = InvalidFileName
@@ -36,7 +36,7 @@ func TestGenerate(t *testing.T) {
 
 	main()
 
-	if buf.String() != "Error:open **"+string(0)+": invalid argument" {
+	if buf.String() != "Error:open **\x00: invalid argument" {
 		t.Error("Unexpected output:", buf.String())
 		return
 	}
@@ -96,14 +96,14 @@ var fmtConstMap = map[interface{}]interface{}{
 fmtFuncDocMap contains the documentation of stdlib fmt functions.
 */
 var fmtFuncDocMap = map[interface{}]interface{}{
-	"Println": "Function: Println",
+	"println": "Function: println",
 }
 
 /*
 fmtFuncMap contains the mapping of stdlib fmt functions.
 */
 var fmtFuncMap = map[interface{}]interface{}{
-	"Println": &ECALFunctionAdapter{reflect.ValueOf(fmt.Println), fmt.Sprint(fmtFuncDocMap["Println"])},
+	"println": &ECALFunctionAdapter{reflect.ValueOf(fmt.Println), fmt.Sprint(fmtFuncDocMap["println"])},
 }
 
 /*

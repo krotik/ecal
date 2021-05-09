@@ -49,7 +49,12 @@ func TestProcessorSimpleCascade(t *testing.T) {
 
 	proc := NewProcessor(1)
 
-	if res := fmt.Sprint(proc); res != "RumbleProcessor 1 (workers:1)" {
+	StderrSave := os.Stderr
+	os.Stderr = nil
+	proc.ThreadPool().TooManyCallback()
+	os.Stderr = StderrSave
+
+	if res := fmt.Sprint(proc); res != "EventProcessor 1 (workers:1)" {
 		t.Error("Unexpected result:", res)
 		return
 	}

@@ -11,6 +11,7 @@
 package tool
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,12 +19,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 
+	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/fileutil"
 	"devt.de/krotik/common/stringutil"
 	"devt.de/krotik/common/termutil"
 	"devt.de/krotik/ecal/config"
+	"devt.de/krotik/ecal/engine"
 	"devt.de/krotik/ecal/interpreter"
 	"devt.de/krotik/ecal/parser"
 	"devt.de/krotik/ecal/scope"
@@ -55,6 +59,7 @@ type CLIInterpreter struct {
 	CustomHandler        CLICustomHandler
 	CustomWelcomeMessage string
 	CustomHelpString     string
+	CustomRules          []*engine.Rule
 
 	EntryFile   string // Entry file for the program
 	LoadPlugins bool   // Flag if stdlib plugins should be loaded
@@ -78,8 +83,8 @@ type CLIInterpreter struct {
 NewCLIInterpreter creates a new commandline interpreter for ECAL.
 */
 func NewCLIInterpreter() *CLIInterpreter {
-	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "", "",
-		true, nil, nil, nil, nil, os.Stdout}
+	return &CLIInterpreter{scope.NewScope(scope.GlobalScope), nil, nil, "", "",
+		[]*engine.Rule{}, "", true, nil, nil, nil, nil, os.Stdout}
 }
 
 /*
@@ -179,6 +184,12 @@ func (i *CLIInterpreter) LoadInitialFile(tid uint64) error {
 
 	i.RuntimeProvider.Processor.Finish()
 	i.RuntimeProvider.Processor.Reset()
+
+	// Add custom rules
+
+	for _, r := range i.CustomRules {
+		errorutil.AssertOk(i.RuntimeProvider.Processor.AddRule(r))
+	}
 
 	if i.CustomHandler != nil {
 		i.CustomHandler.LoadInitialFile(tid)
@@ -369,6 +380,7 @@ func (i *CLIInterpreter) HandleInput(ot OutputTerminal, line string, tid uint64)
 		ot.WriteString(fmt.Sprint("Console supports all normal ECAL statements and the following special commands:\n"))
 		ot.WriteString(fmt.Sprint("\n"))
 		ot.WriteString(fmt.Sprint("    @format - Format all .ecal files in the current root directory.\n"))
+		ot.WriteString(fmt.Sprint("    @prof [profile] - Output profiling information (supports any of Go's pprof profiles).\n"))
 		ot.WriteString(fmt.Sprint("    @reload - Clear the interpreter and reload the initial file if it was given.\n"))
 		ot.WriteString(fmt.Sprint("    @std <package> [glob] - List all available constants and functions of a stdlib package.\n"))
 		ot.WriteString(fmt.Sprint("    @sym [glob] - List all available inbuild functions and available stdlib packages of ECAL.\n"))
@@ -422,7 +434,22 @@ handleSpecialStatements handles inbuild special statements.
 */
 func (i *CLIInterpreter) handleSpecialStatements(ot OutputTerminal, line string) bool {
 
-	if strings.HasPrefix(line, "@format") {
+	if strings.HasPrefix(line, "@prof") {
+		args := strings.Split(line, " ")[1:]
+
+		profile := "goroutine"
+
+		if len(args) > 0 {
+			profile = args[0]
+		}
+
+		var buf bytes.Buffer
+		pprof.Lookup(profile).WriteTo(&buf, 1)
+		ot.WriteString(buf.String())
+
+		return true
+
+	} else if strings.HasPrefix(line, "@format") {
 		err := FormatFiles(*i.Dir, ".ecal")
 		ot.WriteString(fmt.Sprintln(fmt.Sprintln("Files formatted:", err)))
 

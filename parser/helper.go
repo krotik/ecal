@@ -313,6 +313,7 @@ func ASTFromJSONObject(jsonAST map[string]interface{}) (*ASTNode, error) {
 	value, _ := getVal("value", "")
 	identifier, _ := getVal("identifier", false)
 	allowescapes, _ := getVal("allowescapes", false)
+	_, prefixnl := getVal("prefixnewlines", "")
 	_, pos := getVal("pos", "")
 	_, line := getVal("line", "")
 	_, linepos := getVal("linepos", "")
@@ -375,6 +376,7 @@ func ASTFromJSONObject(jsonAST map[string]interface{}) (*ASTNode, error) {
 		fmt.Sprint(value),    // Val
 		identifier == true,   // Identifier
 		allowescapes == true, // AllowEscapes
+		prefixnl,             // PrefixNewlines
 		fmt.Sprint(source),   // Lsource
 		line,                 // Lline
 		linepos,              // Lpos

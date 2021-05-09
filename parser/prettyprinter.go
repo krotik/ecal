@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"devt.de/krotik/common/errorutil"
 	"devt.de/krotik/common/stringutil"
@@ -141,7 +142,8 @@ func init() {
 
 		// TokenTRY - Special case (handled in code)
 		// TokenEXCEPT - Special case (handled in code)
-		NodeFINALLY + "_1": template.Must(template.New(NodeFINALLY).Parse(" finally {\n{{.c1}}}\n")),
+		NodeOTHERWISE + "_1": template.Must(template.New(NodeOTHERWISE).Parse(" otherwise {\n{{.c1}}}")),
+		NodeFINALLY + "_1":   template.Must(template.New(NodeFINALLY).Parse(" finally {\n{{.c1}}}")),
 
 		// Mutex block
 
@@ -238,35 +240,10 @@ func PrettyPrint(ast *ASTNode) (string, error) {
 ppPostProcessing applies post processing rules.
 */
 func ppPostProcessing(ast *ASTNode, path []*ASTNode, ppString string) string {
-	ret := ppString
 
 	// Add meta data
 
-	if len(ast.Meta) > 0 {
-
-		for _, meta := range ast.Meta {
-			metaValue := meta.Value()
-			if meta.Type() == MetaDataPreComment {
-				var buf bytes.Buffer
-
-				scanner := bufio.NewScanner(strings.NewReader(metaValue))
-				for scanner.Scan() {
-					buf.WriteString(fmt.Sprintf(" %v\n", strings.TrimSpace(scanner.Text())))
-				}
-				buf.Truncate(buf.Len() - 1) // Remove the last newline
-
-				if strings.Index(buf.String(), "\n") == -1 {
-					buf.WriteString(" ")
-				}
-
-				ret = fmt.Sprintf("/*%v*/\n%v", buf.String(), ret)
-
-			} else if meta.Type() == MetaDataPostComment {
-				metaValue = strings.TrimSpace(strings.ReplaceAll(metaValue, "\n", ""))
-				ret = fmt.Sprintf("%v # %v", ret, metaValue)
-			}
-		}
-	}
+	ret := ppMetaData(ast, path, ppString)
 
 	// Apply indentation
 
@@ -289,6 +266,8 @@ func ppPostProcessing(ast *ASTNode, path []*ASTNode, ppString string) string {
 			// Add initial indent only if we are inside a block statement
 
 			if stringutil.IndexOf(parent.Name, []string{
+				NodeRETURN,
+				NodeIN,
 				NodeASSIGN,
 				NodePRESET,
 				NodeKVP,
@@ -312,6 +291,77 @@ func ppPostProcessing(ast *ASTNode, path []*ASTNode, ppString string) string {
 				if idx := strings.LastIndex(ret, "\n"); idx != -1 {
 					ret = ret[:idx+1] + ret[idx+IndentationLevel+1:]
 				}
+			}
+		}
+	}
+
+	if ast.Token != nil {
+
+		// Calculate number of extra newlines which should be prefixed the default
+		// pretty printer assumes a single one which produces very compact code
+		// the previous formatting might give a hint where to add extra newlines.
+		// The pretty printer only ever adds a maximum of 1 additional line per
+		// statement
+
+		if ast.Token.PrefixNewlines-1 > 0 {
+			ret = fmt.Sprintf("\n%v", ret)
+		}
+	}
+
+	// Remove all trailing spaces
+
+	newlineSplit := strings.Split(ret, "\n")
+
+	for i, s := range newlineSplit {
+		newlineSplit[i] = strings.TrimRightFunc(s, unicode.IsSpace)
+	}
+
+	return strings.Join(newlineSplit, "\n")
+}
+
+/*
+ppMetaData pretty prints comments.
+*/
+func ppMetaData(ast *ASTNode, path []*ASTNode, ppString string) string {
+	ret := ppString
+
+	if len(ast.Meta) > 0 {
+
+		for _, meta := range ast.Meta {
+			metaValue := meta.Value()
+			if meta.Type() == MetaDataPreComment {
+				var buf bytes.Buffer
+
+				scanner := bufio.NewScanner(strings.NewReader(metaValue))
+				for scanner.Scan() {
+					buf.WriteString(fmt.Sprintf(" %v\n", strings.TrimSpace(scanner.Text())))
+				}
+
+				if ast.Token.Lpos != 1 || strings.Index(metaValue, "\n") == -1 {
+
+					// Remove the last newline if we are not on the root level
+					// or we didn't have any newlines in the original comment
+
+					buf.Truncate(buf.Len() - 1)
+				}
+
+				if strings.Index(buf.String(), "\n") == -1 {
+
+					// If the pretty printed comment does not have any newlines
+					// Add at least a space at the end
+
+					buf.WriteString(" ")
+				}
+
+				ret = fmt.Sprintf("/*%v*/\n%v", buf.String(), ret)
+
+				if ast.Token.Lline > 1 {
+					ret = fmt.Sprintf("\n%v", ret)
+				}
+
+			} else if meta.Type() == MetaDataPostComment {
+				metaValue = strings.TrimSpace(strings.ReplaceAll(metaValue, "\n", ""))
+				ret = fmt.Sprintf("%v # %v", ret, metaValue)
 			}
 		}
 	}

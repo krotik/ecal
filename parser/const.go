@@ -184,6 +184,7 @@ const (
 
 	TokenTRY
 	TokenEXCEPT
+	TokenOTHERWISE
 	TokenFINALLY
 
 	// Mutex block
@@ -298,10 +299,11 @@ const (
 
 	// Try block
 
-	NodeTRY     = "try"
-	NodeEXCEPT  = "except"
-	NodeAS      = "as"
-	NodeFINALLY = "finally"
+	NodeTRY       = "try"
+	NodeEXCEPT    = "except"
+	NodeAS        = "as"
+	NodeOTHERWISE = "otherwise"
+	NodeFINALLY   = "finally"
 
 	// Mutex block
 

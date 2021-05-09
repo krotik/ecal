@@ -561,10 +561,22 @@ func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint6
 
 			for i := 1; i < len(rt.node.Children); i++ {
 				if child := rt.node.Children[i]; child.Name == parser.NodeEXCEPT {
-					if rt.evalExcept(vs, is, tid, errObj, child) {
-						err = nil
+					if ok, newerror := rt.evalExcept(vs, is, tid, errObj, child); ok {
+						err = newerror
 						break
 					}
+				}
+			}
+
+		} else {
+
+			// Evaluate otherwise clause
+
+			for i := 1; i < len(rt.node.Children); i++ {
+				if child := rt.node.Children[i]; child.Name == parser.NodeOTHERWISE {
+					ovs := vs.NewChild(scope.NameFromASTNode(child))
+					_, err = child.Children[0].Runtime.Eval(ovs, is, tid)
+					break
 				}
 			}
 		}
@@ -574,7 +586,8 @@ func (rt *tryRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uint6
 }
 
 func (rt *tryRuntime) evalExcept(vs parser.Scope, is map[string]interface{},
-	tid uint64, errObj map[interface{}]interface{}, except *parser.ASTNode) bool {
+	tid uint64, errObj map[interface{}]interface{}, except *parser.ASTNode) (bool, error) {
+	var newerror error
 	ret := false
 
 	if len(except.Children) == 1 {
@@ -583,7 +596,7 @@ func (rt *tryRuntime) evalExcept(vs parser.Scope, is map[string]interface{},
 
 		evs := vs.NewChild(scope.NameFromASTNode(except))
 
-		except.Children[0].Runtime.Eval(evs, is, tid)
+		_, newerror = except.Children[0].Runtime.Eval(evs, is, tid)
 
 		ret = true
 
@@ -594,7 +607,7 @@ func (rt *tryRuntime) evalExcept(vs parser.Scope, is map[string]interface{},
 		evs := vs.NewChild(scope.NameFromASTNode(except))
 		evs.SetValue(except.Children[0].Token.Val, errObj)
 
-		except.Children[1].Runtime.Eval(evs, is, tid)
+		_, newerror = except.Children[1].Runtime.Eval(evs, is, tid)
 
 		ret = true
 
@@ -623,12 +636,12 @@ func (rt *tryRuntime) evalExcept(vs parser.Scope, is map[string]interface{},
 					evs.SetValue(errorVar, errObj)
 				}
 
-				child.Runtime.Eval(evs, is, tid)
+				_, newerror = child.Runtime.Eval(evs, is, tid)
 			}
 		}
 	}
 
-	return ret
+	return ret, newerror
 }
 
 // Mutex Runtime
@@ -662,18 +675,60 @@ func (rt *mutexRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid uin
 
 		name := rt.node.Children[0].Token.Val
 
+		// Take mutex to modify the mutex map
+
+		rt.erp.MutexesMutex.Lock()
+
+		// Lookup the mutex
+
 		mutex, ok := rt.erp.Mutexes[name]
 		if !ok {
 			mutex = &sync.Mutex{}
 			rt.erp.Mutexes[name] = mutex
 		}
 
+		// Try to take the mutex if this thread does not already own it
+
+		owner, ok := rt.erp.MutexeOwners[name]
+
+		rt.erp.MutexesMutex.Unlock()
+
+		if !ok || owner != tid {
+
+			rt.erp.MutexLog.Add(fmt.Sprintf("Thread: %v - attempting to take lock %v with owner %v at %v:%v",
+				tid, name, owner, rt.node.Token.Lsource, rt.node.Token.Lline))
+
+			mutex.Lock()
+
+			rt.erp.MutexLog.Add(fmt.Sprintf("Thread: %v - took lock %v with owner %v", tid, name, owner))
+
+			// Register ownership on mutex
+
+			rt.erp.MutexesMutex.Lock()
+			rt.erp.MutexeOwners[name] = tid
+			rt.erp.MutexesMutex.Unlock()
+
+			defer func() {
+				rt.erp.MutexLog.Add(fmt.Sprintf("Thread: %v - releasing lock %v", tid, name))
+
+				// Unregister ownership on mutex
+
+				rt.erp.MutexesMutex.Lock()
+				rt.erp.MutexeOwners[name] = 0
+				rt.erp.MutexesMutex.Unlock()
+
+				mutex.Unlock()
+			}()
+
+		} else if owner == tid {
+
+			rt.erp.MutexLog.Add(fmt.Sprintf("Thread: %v - attempted to take lock %v twice", tid, name))
+		}
+
+		rt.erp.MutexLog.Add(fmt.Sprintf("Thread: %v - execute critical section %v", tid, name))
+
 		tvs := vs.NewChild(scope.NameFromASTNode(rt.node))
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		res, err = rt.node.Children[0].Runtime.Eval(tvs, is, tid)
+		res, err = rt.node.Children[1].Runtime.Eval(tvs, is, tid)
 	}
 
 	return res, err

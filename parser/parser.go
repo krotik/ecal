@@ -136,9 +136,10 @@ func init() {
 
 		// Try statement
 
-		TokenTRY:     {NodeTRY, nil, nil, nil, nil, 0, ndTry, nil},
-		TokenEXCEPT:  {NodeEXCEPT, nil, nil, nil, nil, 0, nil, nil},
-		TokenFINALLY: {NodeFINALLY, nil, nil, nil, nil, 0, nil, nil},
+		TokenTRY:       {NodeTRY, nil, nil, nil, nil, 0, ndTry, nil},
+		TokenEXCEPT:    {NodeEXCEPT, nil, nil, nil, nil, 0, nil, nil},
+		TokenOTHERWISE: {NodeOTHERWISE, nil, nil, nil, nil, 0, nil, nil},
+		TokenFINALLY:   {NodeFINALLY, nil, nil, nil, nil, 0, nil, nil},
 
 		// Mutex statement
 
@@ -812,6 +813,22 @@ func ndTry(p *parser, self *ASTNode) (*ASTNode, error) {
 
 		if err == nil {
 			_, err = parseInnerStatements(p, except)
+		}
+	}
+
+	return ndOtherwiseFinally(p, try, err)
+}
+
+/*
+ndOtherwiseFinally is used to parse otherwise and finally blocks.
+*/
+func ndOtherwiseFinally(p *parser, try *ASTNode, err error) (*ASTNode, error) {
+
+	if err == nil && p.node.Token.ID == TokenOTHERWISE {
+		otherwise := p.node
+
+		if err = acceptChild(p, try, TokenOTHERWISE); err == nil {
+			_, err = parseInnerStatements(p, otherwise)
 		}
 	}
 

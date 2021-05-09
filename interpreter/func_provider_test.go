@@ -74,7 +74,7 @@ identifier: a
 `[1:])
 
 	if err == nil ||
-		err.Error() != "ECAL error in ECALTestRuntime: Unknown construct (Unknown function: fmtSprint) (Line:1 Pos:3)" {
+		err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Unknown construct (Unknown function: fmtSprint) (Line:1 Pos:3)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -95,6 +95,26 @@ identifier: len
 	errorutil.AssertOk(err)
 
 	if res != 3. {
+		t.Error("Unexpected result: ", res, err)
+		return
+	}
+
+	res, err = UnitTestEvalAndAST(
+		`type({a: [1,2,3]})`, nil,
+		`
+identifier: type
+  funccall
+    map
+      kvp
+        identifier: a
+        list
+          number: 1
+          number: 2
+          number: 3
+`[1:])
+	errorutil.AssertOk(err)
+
+	if res != "map[interface {}]interface {}{interface {}(nil):[]interface {}{1, 2, 3}}" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -262,6 +282,35 @@ identifier: dumpenv
 		return
 	}
 
+	res, err = UnitTestEvalAndAST(
+		`timestamp(now(), "GMT")`, nil,
+		`
+identifier: timestamp
+  funccall
+    identifier: now
+      funccall
+    string: 'GMT'
+`[1:])
+	errorutil.AssertOk(err)
+
+	if !strings.HasSuffix(fmt.Sprint(res), "GMT") {
+		t.Error("Unexpected result: ", res, err)
+		return
+	}
+
+	res, err = UnitTestEvalAndAST(
+		`rand()`, nil,
+		`
+identifier: rand
+  funccall
+`[1:])
+	errorutil.AssertOk(err)
+
+	if !strings.Contains(fmt.Sprint(res), ".") {
+		t.Error("Unexpected result: ", res, err)
+		return
+	}
+
 	res, err = UnitTestEval(
 		`
 func foo() {
@@ -279,7 +328,7 @@ doc(foo)`, nil)
 		`doc(len)`, nil)
 	errorutil.AssertOk(err)
 
-	if fmt.Sprint(res) != `Len returns the size of a list or map.` {
+	if fmt.Sprint(res) != `Returns the size of a list or map.` {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -327,7 +376,7 @@ identifier: a
 `[1:])
 
 	if err == nil ||
-		err.Error() != "ECAL error in ECALTestRuntime: Unknown construct (Unknown function: len) (Line:1 Pos:3)" {
+		err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Unknown construct (Unknown function: len) (Line:1 Pos:3)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -346,7 +395,7 @@ func TestCronTrigger(t *testing.T) {
 		`setCronTrigger("1 * * * *", "foo", "bar")`, nil)
 
 	if err == nil ||
-		err.Error() != "ECAL error in ECALTestRuntime: Runtime error (Cron spec must have 6 entries separated by space) (Line:1 Pos:1)" {
+		err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Runtime error (Cron spec must have 6 entries separated by space) (Line:1 Pos:1)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -410,7 +459,7 @@ func TestPulseTrigger(t *testing.T) {
 		`setPulseTrigger("test", "foo", "bar")`, nil)
 
 	if err == nil ||
-		err.Error() != "ECAL error in ECALTestRuntime: Runtime error (Parameter 1 should be a number) (Line:1 Pos:1)" {
+		err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Runtime error (Parameter 1 should be a number) (Line:1 Pos:1)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}

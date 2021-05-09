@@ -12,6 +12,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"devt.de/krotik/ecal/engine/pool"
@@ -152,7 +153,15 @@ NewProcessor creates a new event processor with a given number of workers.
 */
 func NewProcessor(workerCount int) Processor {
 	ep := pubsub.NewEventPump()
-	return &eventProcessor{newProcID(), pool.NewThreadPoolWithQueue(NewTaskQueue(ep)),
+
+	pool := pool.NewThreadPoolWithQueue(NewTaskQueue(ep))
+
+	pool.TooManyThreshold = 10
+	pool.TooManyCallback = func() {
+		fmt.Fprintf(os.Stderr, "Warning: The thread pool queue is filling up ...")
+	}
+
+	return &eventProcessor{newProcID(), pool,
 		workerCount, false, NewRuleIndex(), nil, sync.Mutex{}, ep, nil}
 }
 
@@ -487,7 +496,7 @@ func (p *eventProcessor) ProcessEvent(tid uint64, event *Event, parent Monitor) 
 String returns a string representation the processor.
 */
 func (p *eventProcessor) String() string {
-	return fmt.Sprintf("RumbleProcessor %v (workers:%v)", p.ID(), p.workerCount)
+	return fmt.Sprintf("EventProcessor %v (workers:%v)", p.ID(), p.workerCount)
 }
 
 // Unique id creation

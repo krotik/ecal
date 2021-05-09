@@ -131,6 +131,7 @@ try
 	input = `
 try {
 	raise("test", [1,2,3])
+} otherwise {
 } finally {
 }
 `
@@ -144,6 +145,8 @@ try
           number: 1
           number: 2
           number: 3
+  otherwise
+    statements
   finally
     statements
 `[1:]

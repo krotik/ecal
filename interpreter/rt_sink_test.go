@@ -147,7 +147,7 @@ ErrorResult:[
       "rule3": {
         "data": 123,
         "detail": "Return value: 123",
-        "error": "ECAL error in ECALTestRuntime: *** return *** (Return value: 123) (Line:26 Pos:9)",
+        "error": "ECAL error in ECALTestRuntime (ECALEvalTest): *** return *** (Return value: 123) (Line:26 Pos:9)",
         "type": "*** return ***"
       }
     },
@@ -169,7 +169,7 @@ ErrorResult:[
           123
         ],
         "detail": "User bar was seen",
-        "error": "ECAL error in ECALTestRuntime: UserBarWasHere (User bar was seen) (Line:18 Pos:13)",
+        "error": "ECAL error in ECALTestRuntime (ECALEvalTest): UserBarWasHere (User bar was seen) (Line:18 Pos:13)",
         "type": "UserBarWasHere"
       }
     },
@@ -215,7 +215,7 @@ error: {
   "rule1": {
     "data": null,
     "detail": "Unknown function: noexitingfunctioncall",
-    "error": "ECAL error in ECALTestRuntime: Unknown construct (Unknown function: noexitingfunctioncall) (Line:6 Pos:9)",
+    "error": "ECAL error in ECALTestRuntime (ECALEvalTest): Unknown construct (Unknown function: noexitingfunctioncall) (Line:6 Pos:9)",
     "type": "Unknown construct"
   }
 }`[1:] {
@@ -332,7 +332,7 @@ sink test
 	}
 `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Unknown expression in sink declaration apa) (Line:3 Pos:5)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Unknown expression in sink declaration apa) (Line:3 Pos:5)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -347,7 +347,7 @@ sink test
 	}
 `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Expected a list as value) (Line:3 Pos:5)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Expected a list as value) (Line:3 Pos:5)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -361,7 +361,7 @@ sink test
 	}
 `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid state (Cannot add rule without a kind match: test) (Line:2 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid state (Cannot add rule without a kind match: test) (Line:2 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -375,7 +375,7 @@ sink test
 	}
 `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Expected a number as value) (Line:3 Pos:5)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Expected a number as value) (Line:3 Pos:5)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -389,7 +389,7 @@ sink test
 	}
 `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Expected a map as value) (Line:3 Pos:5)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Expected a map as value) (Line:3 Pos:5)" {
 		t.Error("Unexpected result:", err)
 		return
 	}

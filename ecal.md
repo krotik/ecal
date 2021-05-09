@@ -345,12 +345,16 @@ if a == 1 {
 
 Try-except blocks
 --
-ECAL uses try-except blocks to handle error states. Errors can either happen while executing statements or explicitly by using the `raise` function:
+ECAL uses try-except blocks to handle error states. Errors can either happen while executing statements or explicitly by using the `raise` function. Code which should only be executed if no errors happened can be put into an `otherwise` block. Code which should be executed regardless can be put into a `finally` block.
 ```
 try {
     raise("MyError", "My error message", [1,2,3])
 } except "MyError" as e {
     log(e)
+} otherwise {
+    log("No error happened")
+} finally {
+    log("Try block was left")
 }
 ```
 The variable `e` has the following structure:
@@ -419,7 +423,7 @@ len([1,2,3])
 ```
 
 #### `del(listormap, indexorkey) : listormap`
-Del removes an item from a list or map.
+Del removes an item from a list or map. Only the returned value should be used further.
 
 Parameter | Description
 -|-
@@ -433,7 +437,7 @@ del([1,2,3], 1)
 
 
 #### `add(list, value, [index]) : list`
-Add adds an item to a list. The item is added at the optionally given index or at the end if no index is specified.
+Add adds an item to a list. The item is added at the optionally given index or at the end if no index is specified. Only the returned value should be used further.
 
 Parameter | Description
 -|-

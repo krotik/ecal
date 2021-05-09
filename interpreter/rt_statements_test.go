@@ -819,7 +819,7 @@ for [1, b] in x {
 }
 	   `, vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Must have a list of simple variables on the left side of the In expression) (Line:3 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Must have a list of simple variables on the left side of the In expression) (Line:3 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -877,7 +877,7 @@ for a[t] in 1 {
 }
 	   `[1:], vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Invalid construct (Must have a simple variable on the left side of the In expression) (Line:1 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Invalid construct (Must have a simple variable on the left side of the In expression) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -887,7 +887,7 @@ for [a, b] in [[1,2],[3,4],3] {
 }
 	   `[1:], vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Runtime error (Result for loop variable is not a list (value is 3)) (Line:1 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Runtime error (Result for loop variable is not a list (value is 3)) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -897,7 +897,7 @@ for [a, b] in [[1,2],[3,4],[5,6,7]] {
 }
 	   `[1:], vs)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Runtime error (Assigned number of variables is different to number of values (2 variables vs 3 values)) (Line:1 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Runtime error (Assigned number of variables is different to number of values (2 variables vs 3 values)) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -962,10 +962,10 @@ error: Something happened: {
     3
   ],
   "detail": "",
-  "error": "ECAL error in ECALTestRuntime: test 12 () (Line:4 Pos:5)",
+  "error": "ECAL error in ECALTestRuntime (ECALEvalTest): test 12 () (Line:4 Pos:5)",
   "line": 4,
   "pos": 5,
-  "source": "ECALTestRuntime",
+  "source": "ECALTestRuntime (ECALEvalTest)",
   "trace": [
     "raise(\"test 12\", null, [1, 2, 3]) (ECALEvalTest:4)"
   ],
@@ -1011,10 +1011,10 @@ error: Something else happened: {
     3
   ],
   "detail": "",
-  "error": "ECAL error in ECALTestRuntime: test 13 () (Line:4 Pos:5)",
+  "error": "ECAL error in ECALTestRuntime (ECALEvalTest): test 13 () (Line:4 Pos:5)",
   "line": 4,
   "pos": 5,
-  "source": "ECALTestRuntime",
+  "source": "ECALTestRuntime (ECALEvalTest)",
   "trace": [
     "raise(\"test 13\", null, [1, 2, 3]) (ECALEvalTest:4)"
   ],
@@ -1022,10 +1022,10 @@ error: Something else happened: {
 }
 Runtime error: {
   "detail": "a=NULL",
-  "error": "ECAL error in ECALTestRuntime: Operand is not a number (a=NULL) (Line:11 Pos:12)",
+  "error": "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a number (a=NULL) (Line:11 Pos:12)",
   "line": 11,
   "pos": 12,
-  "source": "ECALTestRuntime",
+  "source": "ECALTestRuntime (ECALEvalTest)",
   "trace": [],
   "type": "Operand is not a number"
 }
@@ -1053,6 +1053,71 @@ error: This did not work`[1:] {
 		t.Error("Unexpected result:", testlogger.String())
 		return
 	}
+
+	_, err = UnitTestEval(
+		`
+try {
+	try {
+		x := 1 + "a"
+	} except e {
+		raise("usererror", "This did not work", e)
+	}
+} except e {
+	error(e)
+}
+`, vs)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if testlogger.String() != `
+error: {
+  "data": {
+    "detail": "a",
+    "error": "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a number (a) (Line:4 Pos:12)",
+    "line": 4,
+    "pos": 12,
+    "source": "ECALTestRuntime (ECALEvalTest)",
+    "trace": [],
+    "type": "Operand is not a number"
+  },
+  "detail": "This did not work",
+  "error": "ECAL error in ECALTestRuntime (ECALEvalTest): usererror (This did not work) (Line:6 Pos:3)",
+  "line": 6,
+  "pos": 3,
+  "source": "ECALTestRuntime (ECALEvalTest)",
+  "trace": [
+    "raise(\"usererror\", \"This did not work\", e) (ECALEvalTest:6)"
+  ],
+  "type": "usererror"
+}`[1:] {
+		t.Error("Unexpected result:", testlogger.String())
+		return
+	}
+
+	_, err = UnitTestEval(
+		`
+try {
+  x := 1
+} except e {
+  raise("usererror", "This did not work", e)
+} otherwise {
+  log("all good")
+}
+`, vs)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if testlogger.String() != `
+all good`[1:] {
+		t.Error("Unexpected result:", testlogger.String())
+		return
+	}
 }
 
 func TestMutexStatements(t *testing.T) {
@@ -1061,30 +1126,89 @@ func TestMutexStatements(t *testing.T) {
 
 	_, err := UnitTestEvalAndAST(
 		`
+a := 2
 mutex foo {
 	a := 1
     raise("test 12", null, [1,2,3])
 }
 `, vs,
 		`
-mutex
-  identifier: foo
-  statements
-    :=
-      identifier: a
-      number: 1
-    identifier: raise
-      funccall
-        string: 'test 12'
-        null
-        list
-          number: 1
-          number: 2
-          number: 3
+statements
+  :=
+    identifier: a
+    number: 2
+  mutex
+    identifier: foo
+    statements
+      :=
+        identifier: a
+        number: 1
+      identifier: raise
+        funccall
+          string: 'test 12'
+          null
+          list
+            number: 1
+            number: 2
+            number: 3
+`[1:])
+
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): test 12 () (Line:5 Pos:5)" {
+		t.Error(err)
+		return
+	}
+
+	if vs.String() != `GlobalScope {
+    a (float64) : 1
+    block: mutex (Line:3 Pos:1) {
+    }
+}` {
+		t.Error("Unexpected variable scope:", vs)
+	}
+
+	// Can take mutex twice
+
+	_, err = UnitTestEvalAndAST(
+		`
+a := 2
+mutex foo {
+	a := 1
+	mutex foo {
+		a := 3
+	}
+}
+`, vs,
+		`
+statements
+  :=
+    identifier: a
+    number: 2
+  mutex
+    identifier: foo
+    statements
+      :=
+        identifier: a
+        number: 1
+      mutex
+        identifier: foo
+        statements
+          :=
+            identifier: a
+            number: 3
 `[1:])
 
 	if err != nil {
 		t.Error(err)
 		return
+	}
+
+	if vs.String() != `GlobalScope {
+    a (float64) : 3
+    block: mutex (Line:3 Pos:1) {
+        block: mutex (Line:5 Pos:2) {
+        }
+    }
+}` {
+		t.Error("Unexpected variable scope:", vs)
 	}
 }

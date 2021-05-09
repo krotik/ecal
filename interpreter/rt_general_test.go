@@ -32,12 +32,12 @@ func TestGeneralCases(t *testing.T) {
 	n, _ := parser.Parse("a", "a")
 	inv := &invalidRuntime{newBaseRuntime(rt, n)}
 
-	if err := inv.Validate().Error(); err != "ECAL error in a: Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
+	if err := inv.Validate().Error(); err != "ECAL error in a (a): Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
 
-	if _, err := inv.Eval(nil, nil, 0); err.Error() != "ECAL error in a: Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
+	if _, err := inv.Eval(nil, nil, 0); err.Error() != "ECAL error in a (a): Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -51,7 +51,7 @@ func TestGeneralCases(t *testing.T) {
 	n2.Runtime = inv2
 	n.Children = append(n.Children, n2)
 
-	if err := inv.Validate().Error(); err != "ECAL error in a: Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
+	if err := inv.Validate().Error(); err != "ECAL error in a (a): Invalid construct (Unknown node: identifier) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", err)
 		return
 	}
@@ -106,7 +106,7 @@ statements
 	imp.erp.ImportLocator = nil
 	imp.Validate()
 
-	if res, err := imp.Eval(nil, nil, 0); err == nil || err.Error() != "ECAL error in ECALTestRuntime: Runtime error (No import locator was specified) (Line:1 Pos:1)" {
+	if res, err := imp.Eval(nil, nil, 0); err == nil || err.Error() != "ECAL error in ECALTestRuntime (a): Runtime error (No import locator was specified) (Line:1 Pos:1)" {
 		t.Error("Unexpected result:", res, err)
 		return
 	}
@@ -168,7 +168,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err := UnitTestEval(
 		`+ "a"`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a number (a) (Line:1 Pos:3)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a number (a) (Line:1 Pos:3)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -176,7 +176,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err = UnitTestEval(
 		`x := "a"; + x`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a number (x=a) (Line:1 Pos:13)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a number (x=a) (Line:1 Pos:13)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -184,7 +184,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err = UnitTestEval(
 		`not "a"`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a boolean (a) (Line:1 Pos:5)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a boolean (a) (Line:1 Pos:5)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -192,7 +192,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err = UnitTestEval(
 		`a:= 5; a or 6`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a boolean (a=5) (Line:1 Pos:8)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a boolean (a=5) (Line:1 Pos:8)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -200,7 +200,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err = UnitTestEval(
 		`true or 2`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a boolean (2) (Line:1 Pos:1)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a boolean (2) (Line:1 Pos:1)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}
@@ -208,7 +208,7 @@ func TestOperatorRuntimeErrors(t *testing.T) {
 	res, err = UnitTestEval(
 		`a := "foo"; x in a`, nil)
 
-	if err == nil || err.Error() != "ECAL error in ECALTestRuntime: Operand is not a list (a=foo) (Line:1 Pos:13)" {
+	if err == nil || err.Error() != "ECAL error in ECALTestRuntime (ECALEvalTest): Operand is not a list (a=foo) (Line:1 Pos:13)" {
 		t.Error("Unexpected result: ", res, err)
 		return
 	}

@@ -270,7 +270,7 @@ func testRunningPackedBinary(t *testing.T) {
 		return
 	}
 
-	if !strings.HasPrefix(out.String(), "ECAL error in packtest/dest.exe.error: 123 () (Line:1 Pos:12)") ||
+	if !strings.HasPrefix(out.String(), "ECAL error in packtest/dest.exe.error") ||
 		!strings.Contains(out.String(), "raise(123)") {
 		t.Error("Unexpected result:", out.String())
 		return

@@ -142,7 +142,7 @@ func testTaskQueuePushPop(t *testing.T, tq *TaskQueue, proc Processor, event *Ev
 func testTaskQueueMisc(t *testing.T, tq *TaskQueue, t5 *Task) {
 	tq.Push(t5)
 
-	if fmt.Sprint(tq.queues) != "map[2:[ Task: RumbleProcessor 1 (workers:1) Monitor 5 (parent: Monitor 2 (parent: <nil> priority: 0 activated: false finished: false) priority: 10 activated: false finished: false) Event: DummyEvent main {} (10) ]]" {
+	if fmt.Sprint(tq.queues) != "map[2:[ Task: EventProcessor 1 (workers:1) Monitor 5 (parent: Monitor 2 (parent: <nil> priority: 0 activated: false finished: false) priority: 10 activated: false finished: false) Event: DummyEvent main {} (10) ]]" {
 		t.Error("Unexpected queue:", tq.queues)
 		return
 	}

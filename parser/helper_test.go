@@ -40,6 +40,7 @@ Lpos is different 3 vs 2
   "Val": "1",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "test1",
   "Lline": 1,
   "Lpos": 3
@@ -51,6 +52,7 @@ vs
   "Val": "2",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "test2",
   "Lline": 1,
   "Lpos": 2
@@ -90,6 +92,7 @@ Identifier is different false vs true
   "Val": "1",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "test1",
   "Lline": 1,
   "Lpos": 2
@@ -101,6 +104,7 @@ vs
   "Val": "a",
   "Identifier": true,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "test2",
   "Lline": 1,
   "Lpos": 2
@@ -222,6 +226,7 @@ Lpos is different 1 vs 10
   "Val": "1",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "",
   "Lline": 1,
   "Lpos": 1
@@ -233,6 +238,7 @@ vs
   "Val": "1",
   "Identifier": false,
   "AllowEscapes": false,
+  "PrefixNewlines": 0,
   "Lsource": "",
   "Lline": 1,
   "Lpos": 10

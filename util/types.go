@@ -13,6 +13,8 @@ package util
 import (
 	"time"
 
+	"devt.de/krotik/common/datautil"
+	"devt.de/krotik/ecal/engine/pool"
 	"devt.de/krotik/ecal/parser"
 )
 
@@ -135,6 +137,16 @@ type ECALDebugger interface {
 	BreakOnError(flag bool)
 
 	/*
+	   SetLockingState sets locking status information.
+	*/
+	SetLockingState(mutexeOwners map[string]uint64, mutexLog *datautil.RingBuffer)
+
+	/*
+	   SetThreadPool sets the reference to the current used thread pool.
+	*/
+	SetThreadPool(tp *pool.ThreadPool)
+
+	/*
 	   VisitState is called for every state during the execution of a program.
 	*/
 	VisitState(node *parser.ASTNode, vs parser.Scope, tid uint64) TraceableRuntimeError
@@ -190,6 +202,11 @@ type ECALDebugger interface {
 		Status returns the current status of the debugger.
 	*/
 	Status() interface{}
+
+	/*
+	   LockStatus returns the current locking status.
+	*/
+	LockState() interface{}
 
 	/*
 	   Describe describes a thread currently observed by the debugger.

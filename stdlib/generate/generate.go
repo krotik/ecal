@@ -49,7 +49,6 @@ go list std | grep -v internal | grep -v '\.' | grep -v unsafe | grep -v syscall
 // =============EDIT HERE START=============
 
 var pkgNames = map[string][]string{
-	//	"math": {"Pi", "E", "Phi", "Pow"},
 	//	"fmt":  {"Println", "Sprint"},
 }
 
@@ -74,7 +73,82 @@ func main() {
 	// Make sure we have at least an empty pkgName
 
 	if len(pkgNames) == 0 {
-		pkgNames["math"] = []string{"Pi", "E", "Phi"}
+		pkgNames["math"] = []string{
+			"E",
+			"Pi",
+			"Phi",
+			"Sqrt2",
+			"SqrtE",
+			"SqrtPi",
+			"SqrtPhi",
+			"Ln2",
+			"Log2E",
+			"Ln10",
+			"Log10E",
+
+			"Abs",
+			"Acos",
+			"Acosh",
+			"Asin",
+			"Asinh",
+			"Atan",
+			"Atan2",
+			"Atanh",
+			"Cbrt",
+			"Ceil",
+			"Copysign",
+			"Cos",
+			"Cosh",
+			"Dim",
+			"Erf",
+			"Erfc",
+			"Erfcinv",
+			"Erfinv",
+			"Exp",
+			"Exp2",
+			"Expm1",
+			"Floor",
+			"Frexp",
+			"Gamma",
+			"Hypot",
+			"Ilogb",
+			"Inf",
+			"IsInf",
+			"IsNaN",
+			"J0",
+			"J1",
+			"Jn",
+			"Ldexp",
+			"Lgamma",
+			"Log",
+			"Log10",
+			"Log1p",
+			"Log2",
+			"Logb",
+			"Max",
+			"Min",
+			"Mod",
+			"Modf",
+			"NaN",
+			"Nextafter",
+			"Nextafter32",
+			"Pow",
+			"Pow10",
+			"Remainder",
+			"Round",
+			"RoundToEven",
+			"Signbit",
+			"Sin",
+			"Sincos",
+			"Sinh",
+			"Sqrt",
+			"Tan",
+			"Tanh",
+			"Trunc",
+			"Y0",
+			"Y1",
+			"Yn",
+		}
 	}
 
 	// Make sure pkgNames is sorted
@@ -277,7 +351,7 @@ var %vFuncDocMap = map[interface{}]interface{}{
 			case *types.Func:
 				outbuf.WriteString(
 					fmt.Sprintf(`	"%v": "Function: %v",
-`, name, name))
+`, lcFirst(name), lcFirst(name)))
 			}
 		}
 	}
@@ -306,7 +380,7 @@ var %vFuncMap = map[interface{}]interface{}{
 			if unicode.IsUpper([]rune(name)[0]) {
 				outbuf.WriteString(
 					fmt.Sprintf(`	%#v: &ECALFunctionAdapter{reflect.ValueOf(%v), fmt.Sprint(%vFuncDocMap[%#v])},
-`, name, obj.FullName(), pkgName, name))
+`, lcFirst(name), obj.FullName(), pkgName, lcFirst(name)))
 			}
 		}
 	}
@@ -355,7 +429,22 @@ func getPackageDocs(pkgName string) (string, *doc.Package, error) {
 	return synopsis, pkgDoc, err
 }
 
+/*
+containsSymbol checks if a list of strings contains a given item.
+*/
 func containsSymbol(symbols []string, item string) bool {
 	i := sort.SearchStrings(symbols, item)
 	return i < len(symbols) && symbols[i] == item
+}
+
+/*
+lcFirst lower cases the first rune of a given string
+*/
+func lcFirst(s string) string {
+	var ret = ""
+	for i, v := range s {
+		ret = string(unicode.ToLower(v)) + s[i+len(string(v)):]
+		break
+	}
+	return ret
 }

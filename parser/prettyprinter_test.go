@@ -453,18 +453,19 @@ b:=1
 `
 
 	if err := UnitTestPrettyPrinting(input, "",
-		`/* 
- 
+		`/*
+
  Some initial comment
- 
+
  bla
- */
+
+*/
 a := 1
 func aaa() {
     mutex myresource {
         globalResource := "new value"
     }
-    
+
     func myfunc(a, b, c=1) {
         a := 1 + 1 # Test
     }
@@ -477,26 +478,31 @@ func aaa() {
     ]
     a := 1
     b := 1
+
     /* Foo */
     Foo := {
         "super" : [Bar],
-        /* 
+
+        /*
          * Object IDs
          */
         "id" : 0 # aaaa,
         "idx" : 0,
+
         /* Constructor */
         "init" : func (id) {
             super[0]()
             this.id := id
         },
-        /* 
+
+        /*
          Return the object ID
          */
         "getId" : func () {
             return this.idx
         },
-        /* 
+
+        /*
          Set the object ID
          */
         "setId" : func (id) {
@@ -523,6 +529,120 @@ func aaa() {
     }
 }
 b := 1`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestSpacing(t *testing.T) {
+	input := `
+	
+	import "./templates.ecal" as templates
+	
+	
+a := 1
+a := 2
+
+
+/*
+  SomeSink
+*/
+sink SomeSink
+  kindmatch   ["foo",2]
+  statematch {"a":1,"b":1,"c":1,"d":1}
+scopematch []
+suppresses ["abs"]
+priority 0
+{
+log("1223")
+log("1223")
+
+t = r"Foo bar
+    {{1+2}}   
+    aaa"
+
+
+func foo (z=[1,2,3,4,5]) {
+a := 1
+b := 2
+
+c := 1
+d := 1
+}
+log("1223")
+try {
+x := [1,2,3,4]
+    raise("test 12", null, [1,2,3])
+} except e {
+p := 1
+}
+}
+`
+
+	if err := UnitTestPrettyPrinting(input, "",
+		`import "./templates.ecal" as templates
+
+a := 1
+a := 2
+
+/*
+ SomeSink
+*/
+sink SomeSink
+    kindmatch ["foo", 2]
+    statematch {
+        "a" : 1,
+        "b" : 1,
+        "c" : 1,
+        "d" : 1
+    }
+    scopematch []
+    suppresses ["abs"]
+    priority 0
+{
+    log("1223")
+    log("1223")
+
+    t="Foo bar\n    {{1+2}}   \n    aaa"
+
+    func foo(z=[
+        1,
+        2,
+        3,
+        4,
+        5
+    ]) {
+        a := 1
+        b := 2
+
+        c := 1
+        d := 1
+    }
+    log("1223")
+    try {
+        x := [1, 2, 3, 4]
+        raise("test 12", null, [1, 2, 3])
+    } except e {
+        p := 1
+    }
+}`); err != nil {
+		t.Error(err)
+		return
+	}
+
+	input = `
+
+	for [a,b,c] in foo {
+a := 1
+a := 2
+
+}
+`
+	if err := UnitTestPrettyPrinting(input, "",
+		`for [a, b, c] in foo {
+    a := 1
+    a := 2
+}`); err != nil {
 		t.Error(err)
 		return
 	}

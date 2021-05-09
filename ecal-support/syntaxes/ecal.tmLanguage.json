@@ -23,6 +23,10 @@
           "match": "\\b(import|as)\\b"
         },
         {
+          "name": "keyword.control.let.ecal",
+          "match": "\\b(let)\\b"
+        },
+        {
           "name": "keyword.control.sink.ecal",
           "match": "\\b(sink|kindmatch|scopematch|statematch|priority|suppresses)\\b"
         },
@@ -56,7 +60,7 @@
         },
         {
           "name": "keyword.control.try.ecal",
-          "match": "\\b(try|except|finally)\\b"
+          "match": "\\b(try|except|otherwise|finally)\\b"
         }
       ]
     },

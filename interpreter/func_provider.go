@@ -12,6 +12,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -31,10 +32,14 @@ InbuildFuncMap contains the mapping of inbuild functions.
 var InbuildFuncMap = map[string]util.ECALFunction{
 	"range":           &rangeFunc{&inbuildBaseFunc{}},
 	"new":             &newFunc{&inbuildBaseFunc{}},
+	"type":            &typeFunc{&inbuildBaseFunc{}},
 	"len":             &lenFunc{&inbuildBaseFunc{}},
 	"del":             &delFunc{&inbuildBaseFunc{}},
 	"add":             &addFunc{&inbuildBaseFunc{}},
 	"concat":          &concatFunc{&inbuildBaseFunc{}},
+	"now":             &nowFunc{&inbuildBaseFunc{}},
+	"rand":            &randFunc{&inbuildBaseFunc{}},
+	"timestamp":       &timestampFunc{&inbuildBaseFunc{}},
 	"dumpenv":         &dumpenvFunc{&inbuildBaseFunc{}},
 	"doc":             &docFunc{&inbuildBaseFunc{}},
 	"sleep":           &sleepFunc{&inbuildBaseFunc{}},
@@ -179,7 +184,7 @@ func (rf *rangeFunc) Run(instanceID string, vs parser.Scope, is map[string]inter
 DocString returns a descriptive string.
 */
 func (rf *rangeFunc) DocString() (string, error) {
-	return "Range function which can be used to iterate over number ranges. Parameters are start, end and step.", nil
+	return "Iterates over number ranges. Parameters are start, end and step.", nil
 }
 
 // New
@@ -276,7 +281,40 @@ func (rf *newFunc) addSuperClasses(vs parser.Scope, is map[string]interface{},
 DocString returns a descriptive string.
 */
 func (rf *newFunc) DocString() (string, error) {
-	return "New creates a new object instance.", nil
+	return "Creates a new object instance.", nil
+}
+
+// Type
+// =====
+
+/*
+typeFunc returns the underlying types and values of an object.
+*/
+type typeFunc struct {
+	*inbuildBaseFunc
+}
+
+/*
+Run executes this function.
+*/
+func (rf *typeFunc) Run(instanceID string, vs parser.Scope, is map[string]interface{}, tid uint64, args []interface{}) (interface{}, error) {
+	var res interface{}
+
+	err := fmt.Errorf("Need a value as first parameter")
+
+	if len(args) > 0 {
+		res = fmt.Sprintf("%#v", args[0])
+		err = nil
+	}
+
+	return res, err
+}
+
+/*
+DocString returns a descriptive string.
+*/
+func (rf *typeFunc) DocString() (string, error) {
+	return "Returns the underlying types and values of an object.", nil
 }
 
 // Len
@@ -317,7 +355,7 @@ func (rf *lenFunc) Run(instanceID string, vs parser.Scope, is map[string]interfa
 DocString returns a descriptive string.
 */
 func (rf *lenFunc) DocString() (string, error) {
-	return "Len returns the size of a list or map.", nil
+	return "Returns the size of a list or map.", nil
 }
 
 // Del
@@ -364,7 +402,7 @@ func (rf *delFunc) Run(instanceID string, vs parser.Scope, is map[string]interfa
 DocString returns a descriptive string.
 */
 func (rf *delFunc) DocString() (string, error) {
-	return "Del removes an item from a list or map.", nil
+	return "Removes an item from a list or map.", nil
 }
 
 // Add
@@ -411,7 +449,7 @@ func (rf *addFunc) Run(instanceID string, vs parser.Scope, is map[string]interfa
 DocString returns a descriptive string.
 */
 func (rf *addFunc) DocString() (string, error) {
-	return "Add adds an item to a list. The item is added at the optionally given index or at the end if no index is specified.", nil
+	return "Adds an item to a list. The item is added at the optionally given index or at the end if no index is specified.", nil
 }
 
 // Concat
@@ -458,7 +496,7 @@ func (rf *concatFunc) Run(instanceID string, vs parser.Scope, is map[string]inte
 DocString returns a descriptive string.
 */
 func (rf *concatFunc) DocString() (string, error) {
-	return "Concat joins one or more lists together. The result is a new list.", nil
+	return "Joins one or more lists together. The result is a new list.", nil
 }
 
 // dumpenv
@@ -482,7 +520,104 @@ func (rf *dumpenvFunc) Run(instanceID string, vs parser.Scope, is map[string]int
 DocString returns a descriptive string.
 */
 func (rf *dumpenvFunc) DocString() (string, error) {
-	return "Dumpenv returns the current variable environment as a string.", nil
+	return "Returns the current variable environment as a string.", nil
+}
+
+// now
+// ===
+
+/*
+nowFunc returns the current time in microseconds from 1st of January 1970 UTC.
+*/
+type nowFunc struct {
+	*inbuildBaseFunc
+}
+
+/*
+Run executes this function.
+*/
+func (rf *nowFunc) Run(instanceID string, vs parser.Scope, is map[string]interface{}, tid uint64, args []interface{}) (interface{}, error) {
+	t := time.Now().UnixNano() / int64(time.Microsecond)
+	return float64(t), nil
+}
+
+/*
+DocString returns a descriptive string.
+*/
+func (rf *nowFunc) DocString() (string, error) {
+	return "Returns the current time in microseconds from 1st of January 1970 UTC.", nil
+}
+
+// rand
+// ====
+
+/*
+randFunc returns a pseudo-random number between 0 and 1 from the default source.
+*/
+type randFunc struct {
+	*inbuildBaseFunc
+}
+
+/*
+Run executes this function.
+*/
+func (rf *randFunc) Run(instanceID string, vs parser.Scope, is map[string]interface{}, tid uint64, args []interface{}) (interface{}, error) {
+	return rand.Float64(), nil
+}
+
+/*
+DocString returns a descriptive string.
+*/
+func (rf *randFunc) DocString() (string, error) {
+	return "Returns a pseudo-random number between 0 and 1 from the default source.", nil
+}
+
+// timestamp
+// ===
+
+/*
+timestampFunc returns a human readable time stamp string from a given number of microseconds since posix epoch time.
+*/
+type timestampFunc struct {
+	*inbuildBaseFunc
+}
+
+/*
+Run executes this function.
+*/
+func (rf *timestampFunc) Run(instanceID string, vs parser.Scope, is map[string]interface{}, tid uint64, args []interface{}) (interface{}, error) {
+	var ret string
+	var err error
+
+	micros := float64(time.Now().UnixNano() / int64(time.Microsecond))
+	loc := "UTC"
+
+	if len(args) > 0 {
+		micros, err = rf.AssertNumParam(1, args[0])
+
+		if len(args) > 1 {
+			loc = fmt.Sprint(args[1])
+		}
+	}
+
+	if err == nil {
+		var l *time.Location
+
+		tsTime := time.Unix(0, int64(micros*1000))
+
+		if l, err = time.LoadLocation(loc); err == nil {
+			ret = tsTime.In(l).Format("2006-01-02T15:04:05.999999Z07:MST")
+		}
+	}
+
+	return ret, err
+}
+
+/*
+DocString returns a descriptive string.
+*/
+func (rf *timestampFunc) DocString() (string, error) {
+	return "Returns a human readable time stamp string from a given number of microseconds since posix epoch time.", nil
 }
 
 // doc
@@ -539,7 +674,7 @@ func (rf *docFunc) Run(instanceID string, vs parser.Scope, is map[string]interfa
 DocString returns a descriptive string.
 */
 func (rf *docFunc) DocString() (string, error) {
-	return "Doc returns the docstring of a function.", nil
+	return "Returns the docstring of a function.", nil
 }
 
 // sleep
@@ -576,7 +711,7 @@ func (rf *sleepFunc) Run(instanceID string, vs parser.Scope, is map[string]inter
 DocString returns a descriptive string.
 */
 func (rf *sleepFunc) DocString() (string, error) {
-	return "Sleep pauses the current thread for a number of micro seconds.", nil
+	return "Pauses the current thread for a number of micro seconds.", nil
 }
 
 // raise
@@ -627,7 +762,7 @@ func (rf *raise) Run(instanceID string, vs parser.Scope, is map[string]interface
 DocString returns a descriptive string.
 */
 func (rf *raise) DocString() (string, error) {
-	return "Raise returns an error object.", nil
+	return "Raise an error which stops the execution unless it is handled by a try/except block.", nil
 }
 
 // addEvent
@@ -717,7 +852,7 @@ func (rf *addevent) addEvent(addFunc func(engine.Processor, *engine.Event, *engi
 DocString returns a descriptive string.
 */
 func (rf *addevent) DocString() (string, error) {
-	return "AddEvent adds an event to trigger sinks. This function will return " +
+	return "Adds an event to trigger sinks. This function will return " +
 		"immediately and not wait for the event cascade to finish.", nil
 }
 
@@ -748,18 +883,22 @@ func (rf *addeventandwait) Run(instanceID string, vs parser.Scope, is map[string
 
 				errors := map[interface{}]interface{}{}
 				for k, v := range e.ErrorMap {
-					se := v.(*util.RuntimeErrorWithDetail)
 
 					// Note: The variable scope of the sink (se.environment)
 					// was also captured - for now it is not exposed to the
 					// language environment
 
-					errors[k] = map[interface{}]interface{}{
-						"error":  se.Error(),
-						"type":   se.Type.Error(),
-						"detail": se.Detail,
-						"data":   se.Data,
+					errorItem := map[interface{}]interface{}{
+						"error": v.Error(),
 					}
+
+					if se, ok := v.(*util.RuntimeErrorWithDetail); ok {
+						errorItem["type"] = se.Type.Error()
+						errorItem["detail"] = se.Detail
+						errorItem["data"] = se.Data
+					}
+
+					errors[k] = errorItem
 				}
 
 				item := map[interface{}]interface{}{
@@ -783,7 +922,7 @@ func (rf *addeventandwait) Run(instanceID string, vs parser.Scope, is map[string
 DocString returns a descriptive string.
 */
 func (rf *addeventandwait) DocString() (string, error) {
-	return "AddEventAndWait adds an event to trigger sinks. This function will " +
+	return "Adds an event to trigger sinks. This function will " +
 		"return once the event cascade has finished.", nil
 }
 
@@ -851,7 +990,7 @@ func (ct *setCronTrigger) Run(instanceID string, vs parser.Scope, is map[string]
 DocString returns a descriptive string.
 */
 func (ct *setCronTrigger) DocString() (string, error) {
-	return "setCronTrigger adds a periodic cron job which fires events.", nil
+	return "Adds a periodic cron job which fires events.", nil
 }
 
 // setPulseTrigger
@@ -906,7 +1045,7 @@ func (pt *setPulseTrigger) Run(instanceID string, vs parser.Scope, is map[string
 					lastmicros = micros
 
 					monitor := proc.NewRootMonitor(nil, nil)
-					_, err := proc.AddEvent(event, monitor)
+					_, err := proc.AddEventAndWait(event, monitor)
 
 					if status := proc.Status(); status == "Stopped" || status == "Stopping" {
 						break
@@ -927,5 +1066,5 @@ func (pt *setPulseTrigger) Run(instanceID string, vs parser.Scope, is map[string
 DocString returns a descriptive string.
 */
 func (pt *setPulseTrigger) DocString() (string, error) {
-	return "setPulseTrigger adds recurring events in microsecond intervals.", nil
+	return "Adds recurring events in microsecond intervals.", nil
 }

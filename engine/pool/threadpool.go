@@ -148,6 +148,29 @@ type ThreadPool struct {
 }
 
 /*
+State returns the current state of the ThreadPool.
+*/
+func (tp *ThreadPool) State() map[string]interface{} {
+
+	getIdsFromWorkerMap := func(m map[uint64]*ThreadPoolWorker) []uint64 {
+		var ret []uint64
+		for k := range m {
+			ret = append(ret, k)
+		}
+		return ret
+	}
+
+	tp.workerMapLock.Lock()
+	defer tp.workerMapLock.Unlock()
+
+	return map[string]interface{}{
+		"TaskQueueSize":      tp.queue.Size(),
+		"TotalWorkerThreads": getIdsFromWorkerMap(tp.workerMap),
+		"IdleWorkerThreads":  getIdsFromWorkerMap(tp.workerIdleMap),
+	}
+}
+
+/*
 NewThreadPool creates a new thread pool.
 */
 func NewThreadPool() *ThreadPool {
@@ -299,6 +322,7 @@ func (tp *ThreadPool) SetWorkerCount(count int, wait bool) {
 		for len(tp.workerMap) != count {
 			tid := tp.NewThreadID()
 			worker := &ThreadPoolWorker{tid, tp}
+
 			go worker.run()
 			tp.workerMap[tid] = worker
 		}
