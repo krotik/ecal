@@ -26,7 +26,7 @@ vet:
 	go vet ./...
 
 generate:
-	go generate devt.de/krotik/ecal/stdlib/generate
+	go generate github.com/krotik/ecal/stdlib/generate
 
 build: clean mod generate fmt vet
 	go build -ldflags "-s -w" -o $(NAME) cli/*.go

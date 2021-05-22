@@ -15,8 +15,8 @@ import (
 	"os"
 	"sync"
 
-	"devt.de/krotik/ecal/engine/pool"
-	"devt.de/krotik/ecal/engine/pubsub"
+	"github.com/krotik/ecal/engine/pool"
+	"github.com/krotik/ecal/engine/pubsub"
 )
 
 /*

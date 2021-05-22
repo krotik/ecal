@@ -13,9 +13,9 @@ package util
 import (
 	"time"
 
-	"devt.de/krotik/common/datautil"
-	"devt.de/krotik/ecal/engine/pool"
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/common/datautil"
+	"github.com/krotik/ecal/engine/pool"
+	"github.com/krotik/ecal/parser"
 )
 
 /*

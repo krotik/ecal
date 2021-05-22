@@ -20,12 +20,12 @@ import (
 	"sync"
 	"time"
 
-	"devt.de/krotik/common/datautil"
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/ecal/engine/pool"
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/scope"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/datautil"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/ecal/engine/pool"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/scope"
+	"github.com/krotik/ecal/util"
 )
 
 /*

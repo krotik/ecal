@@ -17,9 +17,9 @@ import (
 	"testing"
 	"time"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/timeutil"
-	"devt.de/krotik/ecal/stdlib"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/timeutil"
+	"github.com/krotik/ecal/stdlib"
 )
 
 func TestStdlib(t *testing.T) {

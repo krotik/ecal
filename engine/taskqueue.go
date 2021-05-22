@@ -17,11 +17,11 @@ import (
 	"sort"
 	"sync"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/sortutil"
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/ecal/engine/pool"
-	"devt.de/krotik/ecal/engine/pubsub"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/sortutil"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/ecal/engine/pool"
+	"github.com/krotik/ecal/engine/pubsub"
 )
 
 /*

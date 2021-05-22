@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"testing"
 
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/ecal/parser"
 )
 
 func TestVarScopeSetMap(t *testing.T) {

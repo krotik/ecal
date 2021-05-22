@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/ecal/parser"
 )
 
 /*

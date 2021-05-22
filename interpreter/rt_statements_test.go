@@ -13,7 +13,7 @@ package interpreter
 import (
 	"testing"
 
-	"devt.de/krotik/ecal/scope"
+	"github.com/krotik/ecal/scope"
 )
 
 func TestGuardStatements(t *testing.T) {

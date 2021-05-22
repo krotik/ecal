@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"strings"
 
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/ecal/util"
 )
 
 /*

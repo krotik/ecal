@@ -27,12 +27,12 @@ import (
 	"sort"
 	"unicode"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/stringutil"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/stringutil"
 )
 
 //go:generate echo Generating ECAL stdlib from Go functions ...
-//go:generate go run devt.de/krotik/ecal/stdlib/generate $PWD/stdlib
+//go:generate go run github.com/krotik/ecal/stdlib/generate $PWD/stdlib
 
 /*
 Stdlib candidates modules:

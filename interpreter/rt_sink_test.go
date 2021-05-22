@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"testing"
 
-	"devt.de/krotik/ecal/scope"
+	"github.com/krotik/ecal/scope"
 )
 
 func TestEventProcessing(t *testing.T) {

@@ -13,7 +13,7 @@ package interpreter
 import (
 	"math"
 
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/ecal/parser"
 )
 
 // Basic Arithmetic Operator Runtimes

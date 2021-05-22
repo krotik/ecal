@@ -22,13 +22,13 @@ import (
 	"strings"
 	"testing"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/fileutil"
-	"devt.de/krotik/ecal/config"
-	"devt.de/krotik/ecal/engine"
-	"devt.de/krotik/ecal/interpreter"
-	"devt.de/krotik/ecal/stdlib"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/fileutil"
+	"github.com/krotik/ecal/config"
+	"github.com/krotik/ecal/engine"
+	"github.com/krotik/ecal/interpreter"
+	"github.com/krotik/ecal/stdlib"
+	"github.com/krotik/ecal/util"
 )
 
 const testDir = "tooltest"

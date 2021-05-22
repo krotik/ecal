@@ -1,5 +1,5 @@
-module devt.de/krotik/ecal
+module github.com/krotik/ecal
 
 go 1.12
 
-require devt.de/krotik/common v1.4.0
+require github.com/krotik/common v1.4.4

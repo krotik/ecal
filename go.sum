@@ -1,2 +1,2 @@
-devt.de/krotik/common v1.4.0 h1:chZihshmuv1yehyujrYyW7Yg4cgRqqIWEG2IAzhfFkA=
-devt.de/krotik/common v1.4.0/go.mod h1:X4nsS85DAxyHkwSg/Tc6+XC2zfmGeaVz+37F61+eSaI=
+github.com/krotik/common v1.4.4 h1:urplr9BYQWonKaDHbd1uQdbbncva+UchHuOC/BGZIVo=
+github.com/krotik/common v1.4.4/go.mod h1:Ti5yTPm8lyOwgllpNNc0bFutiZ3nRu49QbSQCbjEaB0=

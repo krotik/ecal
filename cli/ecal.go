@@ -15,8 +15,8 @@ import (
 	"fmt"
 	"os"
 
-	"devt.de/krotik/ecal/cli/tool"
-	"devt.de/krotik/ecal/config"
+	"github.com/krotik/ecal/cli/tool"
+	"github.com/krotik/ecal/config"
 )
 
 func main() {

@@ -19,8 +19,8 @@ import (
 	"strings"
 	"sync"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/sortutil"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/sortutil"
 )
 
 /*

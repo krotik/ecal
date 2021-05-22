@@ -24,10 +24,10 @@ import (
 	"sync"
 	"time"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/ecal/interpreter"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/ecal/interpreter"
+	"github.com/krotik/ecal/util"
 )
 
 /*

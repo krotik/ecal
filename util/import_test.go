@@ -18,8 +18,8 @@ import (
 	"strings"
 	"testing"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/fileutil"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/fileutil"
 )
 
 const importTestDir = "importtest"

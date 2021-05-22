@@ -16,9 +16,9 @@ import (
 	"fmt"
 	"sync"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/sortutil"
-	"devt.de/krotik/ecal/engine/pubsub"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/sortutil"
+	"github.com/krotik/ecal/engine/pubsub"
 )
 
 /*

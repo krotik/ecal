@@ -17,8 +17,8 @@ import (
 	"strconv"
 	"testing"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/ecal/scope"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/ecal/scope"
 )
 
 func TestECALFunctionAdapterSimple(t *testing.T) {

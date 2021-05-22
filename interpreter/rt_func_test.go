@@ -13,8 +13,8 @@ package interpreter
 import (
 	"testing"
 
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/ecal/scope"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/ecal/scope"
 )
 
 func TestFunctions(t *testing.T) {

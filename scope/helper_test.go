@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"testing"
 
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/ecal/parser"
 )
 
 func TestNameFromASTNode(t *testing.T) {

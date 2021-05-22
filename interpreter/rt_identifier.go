@@ -14,11 +14,11 @@ import (
 	"fmt"
 	"strings"
 
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/scope"
-	"devt.de/krotik/ecal/stdlib"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/scope"
+	"github.com/krotik/ecal/stdlib"
+	"github.com/krotik/ecal/util"
 )
 
 /*

@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"log"
 
-	"devt.de/krotik/ecal/engine"
-	"devt.de/krotik/ecal/interpreter"
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/scope"
-	"devt.de/krotik/ecal/stdlib"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/ecal/engine"
+	"github.com/krotik/ecal/interpreter"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/scope"
+	"github.com/krotik/ecal/stdlib"
+	"github.com/krotik/ecal/util"
 )
 
 func main() {

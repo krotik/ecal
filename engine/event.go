@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"devt.de/krotik/common/stringutil"
+	"github.com/krotik/common/stringutil"
 )
 
 /*

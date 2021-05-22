@@ -16,12 +16,12 @@ import (
 	"path/filepath"
 	"sync"
 
-	"devt.de/krotik/common/datautil"
-	"devt.de/krotik/common/timeutil"
-	"devt.de/krotik/ecal/config"
-	"devt.de/krotik/ecal/engine"
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/datautil"
+	"github.com/krotik/common/timeutil"
+	"github.com/krotik/ecal/config"
+	"github.com/krotik/ecal/engine"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/util"
 )
 
 /*

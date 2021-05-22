@@ -22,17 +22,17 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/fileutil"
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/common/termutil"
-	"devt.de/krotik/ecal/config"
-	"devt.de/krotik/ecal/engine"
-	"devt.de/krotik/ecal/interpreter"
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/scope"
-	"devt.de/krotik/ecal/stdlib"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/fileutil"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/common/termutil"
+	"github.com/krotik/ecal/config"
+	"github.com/krotik/ecal/engine"
+	"github.com/krotik/ecal/interpreter"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/scope"
+	"github.com/krotik/ecal/stdlib"
+	"github.com/krotik/ecal/util"
 )
 
 /*

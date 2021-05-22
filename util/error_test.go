@@ -17,8 +17,8 @@ import (
 	"sync"
 	"testing"
 
-	"devt.de/krotik/ecal/parser"
-	"devt.de/krotik/ecal/scope"
+	"github.com/krotik/ecal/parser"
+	"github.com/krotik/ecal/scope"
 )
 
 func TestRuntimeError(t *testing.T) {

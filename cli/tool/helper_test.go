@@ -17,8 +17,8 @@ import (
 	"strings"
 	"testing"
 
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/common/termutil"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/common/termutil"
 )
 
 type testConsoleLineTerminal struct {

@@ -19,9 +19,9 @@ import (
 	"testing"
 	"time"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/ecal/scope"
-	"devt.de/krotik/ecal/util"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/ecal/scope"
+	"github.com/krotik/ecal/util"
 )
 
 func TestSimpleDebugging(t *testing.T) {

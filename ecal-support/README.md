@@ -3,7 +3,7 @@
 The extension adds support for the Event Condition Action Language (ECAL) to VS Code. The extension requires VSCode 1.50 or higher.
 
 <p align="center">
-  <img height="600px" style="height:600px;" src="https://devt.de/krotik/ecal/raw/master/ecal-support/images/screenshot.png">
+  <img height="600px" style="height:600px;" src="images/screenshot.png">
 </p>
 
 The extension supports the following features:
@@ -18,13 +18,13 @@ The extension supports the following features:
 
 The extension can be installed using a precompiled VSIX file which can be downloaded from here:
 
-https://devt.de/krotik/ecal/releases
+https://github.com/krotik/ecal/releases
 
-Alternatively you can build the extension yourself. To build the extension you need `npm` installed. Download the source code from the [repository](https://devt.de/krotik/ecal). First install all required dependencies with `npm i`. Then compile and package the extension with `npm run compile` and `npm run package`. The folder should now contain a VSIX file.
+Alternatively you can build the extension yourself. To build the extension you need `npm` installed. Download the source code from the [repository](https://github.com/krotik/ecal). First install all required dependencies with `npm i`. Then compile and package the extension with `npm run compile` and `npm run package`. The folder should now contain a VSIX file.
 
 ## Using the extension
 
-The extension can connect to a running ECAL debug server. The ECAL interpreter which can run the debug server needs to be downloaded separately [here](https://devt.de/krotik/ecal/releases). The debug server has to run first and needs the VSCode project directory as its root directory. An ECAL debug server can be started with the following command line:
+The extension can connect to a running ECAL debug server. The ECAL interpreter which can run the debug server needs to be downloaded separately [here](https://github.com/krotik/ecal/releases). The debug server has to run first and needs the VSCode project directory as its root directory. An ECAL debug server can be started with the following command line:
 ```
 ecal debug -server -dir myproj myproj/entry.ecal
 ```

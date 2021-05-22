@@ -19,8 +19,8 @@ import (
 	"text/template"
 	"unicode"
 
-	"devt.de/krotik/common/errorutil"
-	"devt.de/krotik/common/stringutil"
+	"github.com/krotik/common/errorutil"
+	"github.com/krotik/common/stringutil"
 )
 
 /*

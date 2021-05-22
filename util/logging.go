@@ -16,7 +16,7 @@ import (
 	"log"
 	"strings"
 
-	"devt.de/krotik/common/datautil"
+	"github.com/krotik/common/datautil"
 )
 
 // Loger with loglevel support

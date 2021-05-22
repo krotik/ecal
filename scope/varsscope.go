@@ -19,8 +19,8 @@ import (
 	"strings"
 	"sync"
 
-	"devt.de/krotik/common/stringutil"
-	"devt.de/krotik/ecal/parser"
+	"github.com/krotik/common/stringutil"
+	"github.com/krotik/ecal/parser"
 )
 
 /*
