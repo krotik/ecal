@@ -51,13 +51,17 @@ func (rt *returnRuntime) Eval(vs parser.Scope, is map[string]interface{}, tid ui
 	if err == nil {
 		var res interface{}
 
-		if res, err = rt.node.Children[0].Runtime.Eval(vs, is, tid); err == nil {
+		if len(rt.node.Children) > 0 {
+			res, err = rt.node.Children[0].Runtime.Eval(vs, is, tid)
+		} else {
+			res = nil
+		}
+		if err == nil {
 			rerr := rt.erp.NewRuntimeError(util.ErrReturn, fmt.Sprintf("Return value: %v", res), rt.node)
 			err = &returnValue{
 				rerr.(*util.RuntimeError),
 				res,
 			}
-
 		}
 	}
 

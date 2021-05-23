@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="213.48283mm"
+   height="109.12209mm"
+   viewBox="0 0 213.48284 109.12208"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   sodipodi:docname="banner.svg"
+   inkscape:export-filename="/home/ml/data/krotik/ecal/ecal-support/images/banner.png"
+   inkscape:export-xdpi="152.28999"
+   inkscape:export-ydpi="152.28999">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.0873115"
+     inkscape:cx="306.79379"
+     inkscape:cy="90.756159"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="974"
+     inkscape:window-x="0"
+     inkscape:window-y="33"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(64.985011,-22.632257)">
+    <path
+       style="fill:#000000;stroke-width:0.32094687"
+       d="m 108.8087,117.47167 c 1.08224,-1.27977 2.19305,-2.76013 2.46842,-3.2897 0.27538,-0.52957 1.11708,-1.82963 1.87048,-2.88908 1.80418,-2.53706 4.43992,-7.60483 5.08498,-9.77701 1.47952,-4.982048 -0.36509,-10.609564 -3.70246,-11.295496 -1.76118,-0.361991 -3.01018,0.05109 -8.99818,2.975773 -3.19413,1.5601 -5.932418,2.759353 -6.085063,2.665006 -0.152657,-0.09434 -0.27754,-0.0099 -0.27754,0.187307 0,0.197356 -0.144427,0.269569 -0.320939,0.160469 -0.176522,-0.109075 -0.320961,-0.06448 -0.320961,0.09888 0,0.581821 -9.662742,3.904311 -15.565915,5.352271 -1.941733,0.47628 -5.228858,1.11075 -7.30472,1.40993 l -3.77431,0.54392 -0.143186,3.03737 c -0.168769,3.58027 -0.872664,6.18768 -1.856418,6.87675 -1.784134,1.24964 -6.055701,-0.15346 -8.46897,-2.78185 -1.642367,-1.78878 -1.947577,-2.35091 -2.385685,-4.39374 -0.619422,-2.88825 0.525229,-6.19208 5.793831,-16.722976 3.265483,-6.52706 8.920642,-16.314178 10.148396,-17.563331 0.212266,-0.215969 0.700717,-0.901994 1.085442,-1.524498 0.384735,-0.622502 0.832161,-1.131825 0.994281,-1.131825 0.16212,0 0.259099,-0.108315 0.215515,-0.240711 -0.14675,-0.445744 4.351659,-6.857231 6.678502,-9.518734 2.518247,-2.880437 6.285095,-6.742694 8.363831,-8.575716 1.317504,-1.161756 1.320956,-1.170849 1.461858,-3.855338 0.115585,-2.203566 0.311712,-3.00407 1.082685,-4.420612 1.13441,-2.084277 2.407363,-2.763982 4.628328,-2.471346 1.414918,0.186431 2.453468,0.976297 3.379328,2.570124 0.29569,0.509042 0.48689,0.477086 2.43065,-0.406266 1.16034,-0.527322 2.99656,-1.25752 4.08047,-1.622664 1.0839,-0.365145 3.95326,-1.60593 6.37634,-2.757303 l 4.40562,-2.093403 1.40528,1.37077 c 6.77953,6.613103 11.87546,16.352469 13.94077,26.643606 1.03963,5.180429 1.03963,13.919375 0,19.099799 -3.05055,15.200586 -11.80543,27.496474 -24.94047,35.027964 -1.57163,0.90117 -3.05111,1.63848 -3.28773,1.63848 -0.23659,0 0.45529,-1.04709 1.53754,-2.32686 z M 81.313204,86.298474 c 1.564487,-0.653676 2.450693,-1.951128 2.450693,-3.587958 0,-3.602716 -4.597912,-4.97916 -6.455698,-1.932597 -1.249835,2.049577 -0.44744,4.539349 1.774735,5.506889 1.228398,0.53485 0.986487,0.533362 2.23027,0.01443 z"
+       id="path21"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.02365017px;line-height:1.25;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27559125"
+       x="-55.975235"
+       y="38.830177"
+       id="text115"
+       transform="scale(1.0416048,0.96005703)"><tspan
+         sodipodi:role="line"
+         x="-55.975235"
+         y="38.830177"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.27559125"
+         id="tspan168">ECAL</tspan><tspan
+         sodipodi:role="line"
+         x="-55.975235"
+         y="52.609741"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.27559125"
+         id="tspan166" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="-57.756168"
+       y="47.768433"
+       id="text174"><tspan
+         sodipodi:role="line"
+         id="tspan172"
+         x="-57.756168"
+         y="47.768433"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332">A language for concurrent event processing</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="-56.553806"
+       y="60.347218"
+       id="text178"><tspan
+         sodipodi:role="line"
+         id="tspan176"
+         x="-56.553806"
+         y="60.347218"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332">- Simple intuitive syntax</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="70.718887"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan186">- Minimalistic base language</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="81.090553"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan192">- Extensible through code generation,</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="91.462219"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan196">  Go plugins or custom functions</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="101.83389"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan198">- Supports complex event-based flow control</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="112.20555"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan200">  through prioritisation, scoping and</tspan><tspan
+         sodipodi:role="line"
+         x="-56.553806"
+         y="122.57722"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;line-height:0.98000002;font-family:'Gentium Book Basic';-inkscape-font-specification:'Gentium Book Basic';stroke-width:0.26458332"
+         id="tspan206">  selective suppression</tspan></text>
+  </g>
+</svg>

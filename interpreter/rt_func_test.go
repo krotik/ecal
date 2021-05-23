@@ -180,6 +180,39 @@ statements
 	}
 }
 
+func TestEmptyReturn(t *testing.T) {
+	vs := scope.NewScope(scope.GlobalScope)
+
+	res, err := UnitTestEvalAndAST(`
+func myfunc() {
+  return
+  return 1
+}
+result := myfunc()
+`, vs, `
+statements
+  function
+    identifier: myfunc
+    params
+    statements
+      return
+      return
+        number: 1
+  :=
+    identifier: result
+    identifier: myfunc
+      funccall
+`[1:])
+
+	if vsRes := vs.String(); err != nil || res != nil || vsRes != `GlobalScope {
+    myfunc (*interpreter.function) : ecal.function: myfunc (Line 2, Pos 1)
+    result (<nil>) : null
+}` {
+		t.Error("Unexpected result: ", vsRes, res, err)
+		return
+	}
+}
+
 func TestFunctionScoping(t *testing.T) {
 
 	vs := scope.NewScope(scope.GlobalScope)
